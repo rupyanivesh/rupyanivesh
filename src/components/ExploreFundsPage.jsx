@@ -411,7 +411,7 @@ const ScreenerView = () => {
     let cancelled = false;
     const run = async () => {
       try {
-        const res = await fetch('/mf-data/funds-index.json');
+        const res = await fetch(`${import.meta.env.BASE_URL}mf-data/funds-index.json`);
         const data = await res.json();
         if (!cancelled) setIndexData(data);
       } catch (_err) {
@@ -498,7 +498,7 @@ const ScreenerView = () => {
     setPopupFund(fund);
     setPopupDetail(null);
     try {
-      const res = await fetch(`/mf-data/funds/${fund.scheme_code}.json`);
+      const res = await fetch(`${import.meta.env.BASE_URL}mf-data/funds/${fund.scheme_code}.json`);
       if (res.ok) {
         const data = await res.json();
         setPopupDetail(data);
@@ -909,7 +909,7 @@ const DetailView = ({ schemeCode }) => {
     const run = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/mf-data/funds/${schemeCode}.json`);
+        const res = await fetch(`${import.meta.env.BASE_URL}mf-data/funds/${schemeCode}.json`);
         if (!res.ok) throw new Error('Fund not found');
         const data = await res.json();
         if (!cancelled) setFund(data);

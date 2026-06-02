@@ -93,7 +93,7 @@ const AMCLogos = () => {
             >
               <div className="w-16 h-14 flex items-center justify-center">
                 <img
-                  src={`/logos/${amc.file}`}
+                  src={`${import.meta.env.BASE_URL}logos/${amc.file}`}
                   alt={amc.name}
                   className="max-w-full max-h-full object-contain pointer-events-none select-none"
                   loading="lazy"

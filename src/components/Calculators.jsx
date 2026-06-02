@@ -1446,7 +1446,7 @@ const useFundsIndexData = () => {
     let cancelled = false;
     const run = async () => {
       try {
-        const res = await fetch('/mf-data/funds-index.json');
+        const res = await fetch(`${import.meta.env.BASE_URL}mf-data/funds-index.json`);
         const data = await res.json();
         if (!cancelled) setFunds(Array.isArray(data?.funds) ? data.funds : []);
       } catch {
@@ -1475,7 +1475,7 @@ const useEligibleFundsForCalculators = () => {
         const checks = await Promise.all(
           base.map(async (f) => {
             try {
-              const res = await fetch(`/mf-data/funds/${f.scheme_code}.json`);
+              const res = await fetch(`${import.meta.env.BASE_URL}mf-data/funds/${f.scheme_code}.json`);
               const data = await res.json();
               const firstDate = data?.nav_history?.[0]?.date;
               const lastDate = data?.metrics?.latest_date || f.latest_date;
@@ -1967,7 +1967,7 @@ const FundPastPerformanceCalculator = () => {
     const run = async () => {
       if (!fund?.scheme_code) return;
       try {
-        const res = await fetch(`/mf-data/funds/${fund.scheme_code}.json`);
+        const res = await fetch(`${import.meta.env.BASE_URL}mf-data/funds/${fund.scheme_code}.json`);
         const data = await res.json();
         const rows = (data?.nav_history || []).map((x) => ({ nav: Number(x.nav), dt: parseDate(x.date) })).filter((x) => x.dt && Number.isFinite(x.nav));
         if (!rows.length) return;

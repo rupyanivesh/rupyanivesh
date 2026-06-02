@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect } from 'react'
-import { BrowserRouter as Router, Navigate, Routes, Route, useLocation, useNavigationType } from 'react-router-dom'
+import { HashRouter as Router, Navigate, Routes, Route, useLocation, useNavigationType } from 'react-router-dom'
 import Header from './components/Header'
 import Hero from './components/Hero'
 import AMCLogos from './components/AMCLogos'

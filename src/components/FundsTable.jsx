@@ -196,7 +196,7 @@ const FundsTable = () => {
     let cancelled = false;
     const run = async () => {
       try {
-        const res = await fetch('/mf-data/funds-index.json');
+        const res = await fetch(`${import.meta.env.BASE_URL}mf-data/funds-index.json`);
         const data = await res.json();
         if (!cancelled) setIndexData(data);
       } catch (_err) {
@@ -280,7 +280,7 @@ const FundsTable = () => {
       const entries = await Promise.all(
         codes.map(async (code) => {
           try {
-            const res = await fetch(`/mf-data/funds/${code}.json`);
+            const res = await fetch(`${import.meta.env.BASE_URL}mf-data/funds/${code}.json`);
             if (!res.ok) return [code, null];
             const detail = await res.json();
             return [
