@@ -6,6 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RupyaNivesh</title>
     <meta name="description" content="RupyaNivesh is a trusted mutual fund distributor" />
+    <script>
+      var redirect = sessionStorage.getItem('redirect');
+      if (redirect) {
+        sessionStorage.removeItem('redirect');
+        if (redirect !== '/') window.history.replaceState(null, null, '/rupyanivesh' + redirect);
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
