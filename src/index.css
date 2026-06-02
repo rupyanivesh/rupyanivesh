@@ -1,0 +1,77 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    /* Using a soft Ivory / Off-white as global background */
+    @apply font-sans text-navy-900 bg-[#FAF9F6] antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif tracking-tight;
+  }
+}
+
+@layer components {
+  .container-custom {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  .btn-primary {
+    @apply bg-gold text-white px-8 py-3.5 rounded-full font-bold tracking-tight transition-all duration-500 hover:bg-gold-600 hover:shadow-[0_10px_20px_-10px_rgba(197,160,89,0.5)] active:scale-95;
+  }
+  
+  .btn-outline {
+    @apply border border-navy-900/10 text-navy-900 px-8 py-3.5 rounded-full font-bold tracking-tight transition-all duration-500 hover:bg-navy-900 hover:text-white active:scale-95;
+  }
+
+  /* Premium Card: Thin borders, subtle shadows, high whitespace */
+  .premium-card {
+    @apply bg-white border border-gray-100/50 rounded-3xl shadow-[0_4px_30px_rgba(0,0,0,0.03)] transition-all duration-700 hover:shadow-[0_20px_50px_rgba(0,0,0,0.06)] hover:-translate-y-2;
+  }
+
+  .glass-card {
+    @apply bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl overflow-hidden shadow-2xl;
+  }
+
+  .text-gradient-gold {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#D4AF37] via-[#C5A059] to-[#B38D45];
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-navy-900/10 rounded-full hover:bg-gold;
+}
+
+.issue-highlight-target {
+  scroll-margin-top: 110px;
+  animation: issueGlowPulse 2.4s ease-in-out;
+  box-shadow: 0 0 0 2px rgba(197, 160, 89, 0.45), 0 0 28px rgba(197, 160, 89, 0.35);
+  border-radius: 12px;
+}
+
+@keyframes issueGlowPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(197, 160, 89, 0.0), 0 0 0 rgba(197, 160, 89, 0.0);
+    background-color: rgba(197, 160, 89, 0.0);
+  }
+  20% {
+    box-shadow: 0 0 0 2px rgba(197, 160, 89, 0.5), 0 0 28px rgba(197, 160, 89, 0.35);
+    background-color: rgba(197, 160, 89, 0.08);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(197, 160, 89, 0.0), 0 0 0 rgba(197, 160, 89, 0.0);
+    background-color: rgba(197, 160, 89, 0.0);
+  }
+}
+
