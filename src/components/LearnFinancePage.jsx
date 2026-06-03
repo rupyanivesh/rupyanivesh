@@ -523,8 +523,10 @@ const VideosSection = () => {
                     className="absolute inset-0 w-full h-full border-0"
                     src={`https://www.youtube.com/embed/${v.id}?rel=0&iv_load_policy=3&modestbranding=1`}
                     title={v.title}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowFullScreen
                     loading="lazy"
+                    referrerPolicy="strict-origin-when-cross-origin"
                   />
                 </div>
                 <div className="p-4">
