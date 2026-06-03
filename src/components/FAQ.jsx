@@ -86,7 +86,7 @@ const FAQ = () => {
           <p className="text-gray-500 text-sm">
             Have a specific concern?{' '}
             <a
-              href="https://wa.me/919518107944?text=Hi%2C%20I%20have%20a%20specific%20concern%20and%20would%20like%20to%20speak%20with%20an%20expert."
+              href="https://api.whatsapp.com/send/?phone=918889998057&text=Hi%2C+I+have+a+specific+concern+and+would+like+to+speak+with+an+expert.&type=phone_number&app_absent=0"
               target="_blank"
               rel="noopener noreferrer"
               className="text-gold font-bold underline underline-offset-2 hover:text-gold/80 transition-colors"

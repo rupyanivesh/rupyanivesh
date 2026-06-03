@@ -1,4 +1,36 @@
 ﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+
+const UPPERCASE_WORDS = new Set([
+  'SBI','HDFC','ICICI','AXIS','DSP','UTI','LIC','IDBI','BOI','HSBC','JM',
+  'PPFAS','ITI','NJ','PGIM','MOSL','ELSS','NFO','ETF','FoF','SIP','NAV',
+  'AMC','SEBI','MF','US','UK','ESG','IT','PSU','FMCG','CEF','G-SEC',
+]);
+
+const toTitleCase = (str) =>
+  str.replace(/\b([a-zA-Z]+)\b/g, (word) => {
+    const up = word.toUpperCase();
+    if (UPPERCASE_WORDS.has(up)) return up;
+    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+  });
+
+const cleanName = (name) =>
+  toTitleCase(String(name || '').trim())
+    .replace(/[\s\-–]+growth\s+plan[\s\-–]+growth\s+option/gi, ' (Growth)')
+    .replace(/[\s\-–]+growth\s+plan[\s\-–]+growth/gi, ' (Growth)')
+    .replace(/[\s\-–]+growth\s+plan/gi, ' (Growth)')
+    .replace(/[\s\-–]+growth\s+option/gi, ' (Growth)')
+    .replace(/\s*\(Growth\)\s*\(Growth\)/gi, ' (Growth)')
+    .replace(/[\s\-–]+payout\s+of\s+income\s+distribution\s+cum\s*capital\s+withdrawal\s+option/gi, ' (IDCW)')
+    .replace(/[\s\-–]+income\s+distribution\s+cum\s+capital\s+withdrawal\s+option/gi, ' (IDCW)')
+    .replace(/[\s\-–]+income\s+cum\s+distribution\s+withdrawal\s+option/gi, ' (IDCW)')
+    .replace(/[\s\-–]+idcw\s+option/gi, ' (IDCW)')
+    .replace(/[\s\-–]+idcw\s+payout/gi, ' (IDCW)')
+    .replace(/[\s\-–]+idcw/gi, ' (IDCW)')
+    .replace(/\s*\(IDCW\)\s*\(IDCW\)/gi, ' (IDCW)')
+    .replace(/[\s\-–]+cumulative\s+option/gi, ' (Growth)')
+    .replace(/[\s\-–]+growth$/gi, ' (Growth)')
+    .replace(/\(idcw\)/gi, '(IDCW)')
+    .trim();
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ArrowUpRight, ChevronDown, Search } from 'lucide-react';
 import { createPortal } from 'react-dom';
@@ -313,14 +345,14 @@ const SummaryPopup = ({ fund, detail, onClose }) => {
   }, []);
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] bg-black/35 pointer-events-auto">
+    <div className="fixed inset-0 z-[9999] bg-black/35 pointer-events-auto" onClick={onClose}>
       <div className="h-full w-full flex md:items-start md:justify-center md:p-4">
       <div
         ref={popupCardRef}
         className="w-full md:max-w-[760px] md:rounded-2xl border border-gray-200 bg-white shadow-2xl relative z-[10000] pointer-events-auto h-[100svh] md:max-h-[90vh] md:h-auto flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-gray-100 p-3 flex items-center justify-between shrink-0">
+        <div className="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-gray-100 p-3 flex items-center shrink-0">
           <button
             onClick={onClose}
             className="inline-flex items-center gap-2 rounded-full border border-navy-900/15 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-navy-900"
@@ -328,17 +360,11 @@ const SummaryPopup = ({ fund, detail, onClose }) => {
             <ArrowLeft size={14} />
             Back
           </button>
-          <button
-            onClick={onClose}
-            className="hidden md:inline-flex items-center rounded-full border border-navy-900/15 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-navy-900"
-          >
-            Close
-          </button>
         </div>
         <div className="flex-1 overflow-y-auto overscroll-y-contain [webkit-overflow-scrolling:touch]">
         <div className="p-3 border-b border-gray-100">
           <p className="text-xs text-navy-900/50 font-bold uppercase tracking-widest">{fund?.fund_house}</p>
-          <h3 className="text-2xl leading-tight font-serif font-bold text-navy-900 mt-1">{fund?.scheme_name}</h3>
+          <h3 className="text-2xl leading-tight font-serif font-bold text-navy-900 mt-1">{cleanName(fund?.scheme_name)}</h3>
           <p className="text-sm text-navy-900/55">{fund?.scheme_category}</p>
           <div className="mt-2 flex flex-wrap gap-2 text-xs">
             <span className="rounded-full bg-[#FAF9F6] border border-gray-200 px-2.5 py-1 text-navy-900/70">
@@ -771,7 +797,7 @@ const ScreenerView = () => {
                     onClick={() => openPopup(fund)}
                     className="text-left w-full font-semibold text-[1rem] text-navy-900 hover:text-gold leading-snug transition-colors"
                   >
-                    {fund.scheme_name}
+                    {cleanName(fund.scheme_name)}
                   </button>
                   <p className="text-xs text-navy-900/50 mt-0.5">{fund.fund_house}</p>
 
@@ -842,7 +868,7 @@ const ScreenerView = () => {
                       <td className="px-3 py-3 text-navy-900/50 align-top">{idx + 1}</td>
                       <td className="px-3 py-3 align-top">
                         <button onClick={() => openPopup(fund)} className="text-left font-semibold text-[0.95rem] md:text-[1.03rem] text-navy-900 hover:text-gold leading-snug transition-colors">
-                          {fund.scheme_name}
+                          {cleanName(fund.scheme_name)}
                         </button>
                         <p className="text-xs text-navy-900/50 mt-0.5">{fund.fund_house}</p>
                       </td>
@@ -1228,7 +1254,7 @@ const DetailView = ({ schemeCode }) => {
                       Regular
                     </span>
                   </div>
-                  <h1 className="mt-2 text-[1.42rem] font-serif font-bold text-navy-900 leading-[1.16] break-words">{fund.meta?.scheme_name}</h1>
+                  <h1 className="mt-2 text-[1.42rem] font-serif font-bold text-navy-900 leading-[1.16] break-words">{cleanName(fund.meta?.scheme_name)}</h1>
                   <p className="mt-1 text-sm text-navy-900/55 line-clamp-2">{fund.meta?.scheme_category}</p>
 
                   <div className="mt-3 rounded-xl border border-[#ece5d8] bg-[#fffdf8] p-2.5">

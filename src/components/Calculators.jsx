@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate, useParams, Navigate } from 'react-router-dom';
 import {
@@ -591,9 +591,7 @@ const SIPCalculator = () => {
             </div>
           </div>
         </div>
-        <button className="hidden lg:block w-full bg-navy-900 text-white font-bold py-4 rounded-xl mt-4 hover:bg-gold transition-all duration-300 shadow-lg shadow-navy-900/10 active:scale-[0.98] text-sm">
-          Get Started
-        </button>
+        <Link to="/contact" className="w-full bg-navy-900 text-white font-bold py-4 rounded-xl mt-4 hover:bg-gold transition-all duration-300 shadow-lg shadow-navy-900/10 active:scale-[0.98] text-sm text-center block">Contact Us</Link>
       </div>
 
       {/* Right: Visualization */}
@@ -687,9 +685,6 @@ const SIPCalculator = () => {
             <div className="text-lg lg:text-2xl font-sans font-black text-navy-900 whitespace-nowrap">{formatCurrency(result.total, true)}</div>
           </div>
         </div>
-        <button className="lg:hidden w-full bg-navy-900 text-white font-bold py-4 rounded-xl hover:bg-gold transition-all duration-300 shadow-lg shadow-navy-900/10 active:scale-[0.98] text-sm">
-          Get Started
-        </button>
       </div>
     </div>
   );
@@ -769,9 +764,7 @@ const LumpsumCalculator = () => {
             </div>
           </div>
         </div>
-        <button className="hidden lg:block w-full bg-navy-900 text-white font-bold py-4 rounded-xl mt-4 hover:bg-gold transition-all duration-300 shadow-lg shadow-navy-900/10 active:scale-[0.98] text-sm">
-          Get Started
-        </button>
+        <Link to="/contact" className="w-full bg-navy-900 text-white font-bold py-4 rounded-xl mt-4 hover:bg-gold transition-all duration-300 shadow-lg shadow-navy-900/10 active:scale-[0.98] text-sm text-center block">Contact Us</Link>
       </div>
 
       {/* Right: Visualization */}
@@ -867,9 +860,6 @@ const LumpsumCalculator = () => {
             <div className="text-lg lg:text-2xl font-sans font-black text-navy-900 whitespace-nowrap">{formatCurrency(result.total, true)}</div>
           </div>
         </div>
-        <button className="lg:hidden w-full bg-navy-900 text-white font-bold py-4 rounded-xl hover:bg-gold transition-all duration-300 shadow-lg shadow-navy-900/10 active:scale-[0.98] text-sm">
-          Get Started
-        </button>
       </div>
     </div>
   );
@@ -963,9 +953,7 @@ const RetirementCalculator = () => {
             </div>
           </div>
         </div>
-        <button className="hidden lg:block w-full bg-navy-900 text-white font-bold py-4 rounded-xl mt-4 hover:bg-gold transition-all duration-300 shadow-lg shadow-navy-900/10 active:scale-[0.98] text-sm">
-          Get Started
-        </button>
+        <Link to="/contact" className="w-full bg-navy-900 text-white font-bold py-4 rounded-xl mt-4 hover:bg-gold transition-all duration-300 shadow-lg shadow-navy-900/10 active:scale-[0.98] text-sm text-center block">Contact Us</Link>
       </div>
 
       {/* Right: Visualization */}
@@ -1061,9 +1049,6 @@ const RetirementCalculator = () => {
             <div className="text-lg lg:text-2xl font-sans font-black text-navy-900 whitespace-nowrap">{formatCurrency(result.total, true)}</div>
           </div>
         </div>
-        <button className="lg:hidden w-full bg-navy-900 text-white font-bold py-4 rounded-xl hover:bg-gold transition-all duration-300 shadow-lg shadow-navy-900/10 active:scale-[0.98] text-sm">
-          Get Started
-        </button>
       </div>
     </div>
   );
@@ -1141,9 +1126,7 @@ const InflationTracker = () => {
             </div>
           </div>
         </div>
-        <button className="hidden lg:block w-full bg-navy-900 text-white font-bold py-4 rounded-xl mt-4 hover:bg-gold transition-all duration-300 shadow-lg shadow-navy-900/10 active:scale-[0.98] text-sm">
-          Get Started
-        </button>
+        <Link to="/contact" className="w-full bg-navy-900 text-white font-bold py-4 rounded-xl mt-4 hover:bg-gold transition-all duration-300 shadow-lg shadow-navy-900/10 active:scale-[0.98] text-sm text-center block">Contact Us</Link>
       </div>
 
       {/* Right: Visualization */}
@@ -1241,9 +1224,6 @@ const InflationTracker = () => {
             <div className="text-lg lg:text-2xl font-sans font-black text-navy-900 whitespace-nowrap">{formatCurrency(result.future, true)}</div>
           </div>
         </div>
-        <button className="lg:hidden w-full bg-navy-900 text-white font-bold py-4 rounded-xl hover:bg-gold transition-all duration-300 shadow-lg shadow-navy-900/10 active:scale-[0.98] text-sm">
-          Get Started
-        </button>
       </div>
     </div>
   );
@@ -1328,9 +1308,7 @@ const EducationGoal = () => {
             </div>
           </div>
         </div>
-        <button className="hidden lg:block w-full bg-navy-900 text-white font-bold py-4 rounded-xl mt-4 hover:bg-gold transition-all duration-300 shadow-lg shadow-navy-900/10 active:scale-[0.98] text-sm">
-          Get Started
-        </button>
+        <Link to="/contact" className="w-full bg-navy-900 text-white font-bold py-4 rounded-xl mt-4 hover:bg-gold transition-all duration-300 shadow-lg shadow-navy-900/10 active:scale-[0.98] text-sm text-center block">Contact Us</Link>
       </div>
 
       {/* Right: Visualization */}
@@ -1426,9 +1404,6 @@ const EducationGoal = () => {
             <div className="text-lg lg:text-2xl font-sans font-black text-navy-900 whitespace-nowrap">{formatCurrency(target, true)}</div>
           </div>
         </div>
-        <button className="lg:hidden w-full bg-navy-900 text-white font-bold py-4 rounded-xl hover:bg-gold transition-all duration-300 shadow-lg shadow-navy-900/10 active:scale-[0.98] text-sm">
-          Get Started
-        </button>
       </div>
     </div>
   );
@@ -1715,6 +1690,7 @@ const SimpleCalcCard = ({ title, children, resultRows }) => (
         </div>
       ))}
     </div>
+    <Link to="/contact" className="w-full bg-navy-900 text-white font-bold py-4 rounded-xl mt-4 hover:bg-gold transition-all duration-300 shadow-lg shadow-navy-900/10 active:scale-[0.98] text-sm text-center block">Contact Us</Link>
   </div>
 );
 
@@ -2077,7 +2053,7 @@ export const tools = [
       },
       {
         q: "What is the minimum SIP amount?",
-        a: "Most mutual fund houses allow SIPs starting from as low as **₹100 to ₹500 per month**. Some micro-SIP schemes go even lower. There is no maximum cap - you can invest any amount that suits your financial plan."
+        a: "Most mutual fund houses allow SIPs starting from as low as **â‚¹100 to â‚¹500 per month**. Some micro-SIP schemes go even lower. There is no maximum cap - you can invest any amount that suits your financial plan."
       },
       {
         q: "Can I stop or modify my SIP anytime?",
@@ -2085,11 +2061,11 @@ export const tools = [
       },
       {
         q: "How does SIP differ from a Recurring Deposit (RD)?",
-        a: "Key differences:\nï¿½ RD offers **fixed, guaranteed returns**; SIP returns are market-linked and variable\nï¿½ SIP has potential for **significantly higher long-term returns** (especially equity funds)\nï¿½ SIP carries market risk; RD is generally low-risk and fixed-return"
+        a: "Key differences:\nÃ¯Â¿Â½ RD offers **fixed, guaranteed returns**; SIP returns are market-linked and variable\nÃ¯Â¿Â½ SIP has potential for **significantly higher long-term returns** (especially equity funds)\nÃ¯Â¿Â½ SIP carries market risk; RD is generally low-risk and fixed-return"
       },
       {
         q: "What is Step-Up SIP?",
-        a: "A **Step-Up SIP** (also called Top-Up SIP) allows you to increase your SIP amount by a fixed percentage or absolute amount every year. For example, increasing by 10% annually means your first-year SIP of ₹5,000/month becomes ₹5,500 in year 2, ₹6,050 in year 3, and so on. This aligns investments with your growing income and dramatically boosts the final corpus."
+        a: "A **Step-Up SIP** (also called Top-Up SIP) allows you to increase your SIP amount by a fixed percentage or absolute amount every year. For example, increasing by 10% annually means your first-year SIP of â‚¹5,000/month becomes â‚¹5,500 in year 2, â‚¹6,050 in year 3, and so on. This aligns investments with your growing income and dramatically boosts the final corpus."
       }
     ]
   },
@@ -2937,6 +2913,7 @@ const Calculators = () => {
   );
 };
 export default Calculators;
+
 
 
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp, ShieldCheck, PieChart, Coins, PiggyBank, CalendarClock, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -191,8 +191,8 @@ const LearnFinance = () => {
                 transition={{ duration: 0.3 }}
               >
                 <div className="mb-8">
-                  <h2 className="text-5xl font-serif font-bold text-white leading-tight">
-                    Know about <br /><span className="text-gold italic">Mutual Funds</span>
+                  <h2 className="text-6xl lg:text-7xl font-serif font-bold text-white leading-tight">
+                    Know about <br /><span className="text-gold italic text-7xl lg:text-8xl">Mutual Funds</span>
                   </h2>
                 </div>
 
@@ -208,22 +208,25 @@ const LearnFinance = () => {
                         spotlightColor={cat.glowColor}
                       >
                         <div className="flex items-center gap-4">
-                          <div className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all shrink-0 ${
+                          <div className={`w-13 h-13 rounded-xl flex items-center justify-center transition-all shrink-0 ${
                             selectedCategory.id === cat.id ? 'bg-gold text-navy-900' : 'bg-white/5 text-gold'
                           }`}>
-                            <cat.icon size={20} />
+                            <cat.icon size={24} />
                           </div>
                           <div className="flex-grow min-w-0">
-                            <h3 className={`text-base font-serif font-bold transition-colors ${
+                            <h3 className={`text-lg font-serif font-bold transition-colors ${
                               selectedCategory.id === cat.id ? 'text-gold' : 'text-white'
                             }`}>{cat.title}</h3>
-                            <div className="flex gap-2 mt-0.5">
-                              {cat.tags.map(tag => (
-                                <span key={tag} className="text-[7px] font-black uppercase tracking-widest text-white/30">{tag}</span>
+                            <div className="flex items-center gap-1.5 mt-1">
+                              {cat.tags.map((tag, i) => (
+                                <React.Fragment key={tag}>
+                                  {i > 0 && <span className="text-gold/60 text-[10px]">·</span>}
+                                  <span className="text-[10px] font-black uppercase tracking-widest text-white/65">{tag}</span>
+                                </React.Fragment>
                               ))}
                             </div>
                           </div>
-                          <ArrowRight size={16} className="text-gold/50 shrink-0" />
+                          <ArrowRight size={18} className="text-gold/50 shrink-0" />
                         </div>
                       </SpotlightCard>
                     </div>
@@ -283,9 +286,12 @@ const LearnFinance = () => {
                         <h3 className={`text-lg font-serif font-bold transition-colors ${
                           selectedCategory.id === cat.id ? 'text-gold' : 'text-white'
                         }`}>{cat.title}</h3>
-                        <div className="flex gap-2 mt-1">
-                          {cat.tags.slice(0, 2).map(tag => (
-                            <span key={tag} className="text-[7px] font-black uppercase tracking-widest text-white/30">{tag}</span>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          {cat.tags.slice(0, 2).map((tag, i) => (
+                            <React.Fragment key={tag}>
+                              {i > 0 && <span className="text-gold/60 text-[10px]">·</span>}
+                              <span className="text-[10px] font-black uppercase tracking-widest text-white/65">{tag}</span>
+                            </React.Fragment>
                           ))}
                         </div>
                       </div>

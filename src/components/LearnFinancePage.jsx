@@ -223,13 +223,13 @@ const HeroSection = () => (
       {/* Pill nav */}
       <motion.div {...fadeUp(0.18)} className="flex flex-wrap justify-center gap-2 mb-14">
         {pillLinks.map((p) => (
-          <a
+          <button
             key={p.href}
-            href={p.href}
+            onClick={() => document.getElementById(p.href.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
             className="px-4 py-2 rounded-full border border-white/15 text-white/70 text-xs font-medium bg-white/5 hover:bg-gold hover:border-gold hover:text-navy-900 hover:font-bold transition-all"
           >
             {p.label}
-          </a>
+          </button>
         ))}
       </motion.div>
 
@@ -521,7 +521,7 @@ const VideosSection = () => {
                 <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
                   <iframe
                     className="absolute inset-0 w-full h-full border-0"
-                    src={`https://www.youtube.com/embed/${v.id}`}
+                    src={`https://www.youtube.com/embed/${v.id}?rel=0&iv_load_policy=3&modestbranding=1`}
                     title={v.title}
                     allowFullScreen
                     loading="lazy"

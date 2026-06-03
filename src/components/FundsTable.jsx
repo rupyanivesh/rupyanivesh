@@ -15,36 +15,6 @@ const riskConfig = {
 const riskLevels = ['Low', 'Low to Moderate', 'Moderate', 'Moderately High', 'High', 'Very High'];
 const riskColors = ['#16a34a', '#65a30d', '#ca8a04', '#ea580c', '#dc2626', '#991b1b'];
 const TABS = ['Equity', 'Debt', 'ELSS', 'Hybrid'];
-const CURATED_FUNDS = {
-  Equity: [
-    { name: 'Parag Parikh Flexi Cap Fund', amc: 'PPFAS Mutual Fund' },
-    { name: 'HDFC Flexi Cap Fund', amc: 'HDFC Mutual Fund' },
-    { name: 'ICICI Prudential Large Cap Fund (erstwhile Bluechip Fund)', amc: 'ICICI Prudential Mutual Fund' },
-    { name: 'Mirae Asset Large Cap Fund', amc: 'Mirae Asset Mutual Fund' },
-    { name: 'Nippon India Large Cap Fund', amc: 'Nippon India Mutual Fund' },
-  ],
-  Debt: [
-    { name: 'HDFC Corporate Bond Fund', amc: 'HDFC Mutual Fund' },
-    { name: 'ICICI Prudential Corporate Bond Fund', amc: 'ICICI Prudential Mutual Fund' },
-    { name: 'SBI Corporate Bond Fund', amc: 'SBI Mutual Fund' },
-    { name: 'Kotak Corporate Bond Fund', amc: 'Kotak Mutual Fund' },
-    { name: 'Aditya Birla Sun Life Corporate Bond Fund', amc: 'Aditya Birla Sun Life Mutual Fund' },
-  ],
-  ELSS: [
-    { name: 'Quant ELSS Tax Saver Fund', amc: 'Quant Mutual Fund' },
-    { name: 'Mirae Asset Tax Saver Fund', amc: 'Mirae Asset Mutual Fund' },
-    { name: 'Canara Robeco Equity Tax Saver Fund', amc: 'Canara Robeco Mutual Fund' },
-    { name: 'Axis Long Term Equity Fund', amc: 'Axis Mutual Fund' },
-    { name: 'DSP ELSS Tax Saver Fund', amc: 'DSP Mutual Fund' },
-  ],
-  Hybrid: [
-    { name: 'HDFC Balanced Advantage Fund', amc: 'HDFC Mutual Fund' },
-    { name: 'ICICI Prudential Balanced Advantage Fund', amc: 'ICICI Prudential Mutual Fund' },
-    { name: 'Kotak Equity Hybrid Fund', amc: 'Kotak Mutual Fund' },
-    { name: 'SBI Equity Hybrid Fund', amc: 'SBI Mutual Fund' },
-    { name: 'Mirae Asset Hybrid Equity Fund', amc: 'Mirae Asset Mutual Fund' },
-  ],
-};
 
 const toNum = (v) => {
   const n = Number(v);
@@ -85,10 +55,37 @@ const normalize = (v) =>
     .replace(/\s+/g, ' ')
     .trim();
 
-const toTokens = (v) => normalize(v).split(' ').filter(Boolean);
-const NAME_STOPWORDS = new Set([
-  'fund', 'plan', 'regular', 'direct', 'growth', 'idcw', 'option', 'and', 'the', 'of', 'erstwhile',
+const UPPERCASE_WORDS = new Set([
+  'SBI','HDFC','ICICI','AXIS','DSP','UTI','LIC','IDBI','BOI','HSBC','JM',
+  'PPFAS','ITI','NJ','PGIM','MOSL','ELSS','NFO','ETF','FoF','SIP','NAV',
+  'AMC','SEBI','MF','US','UK','ESG','IT','PSU','FMCG','CEF','G-SEC',
 ]);
+
+const toTitleCase = (str) =>
+  str.replace(/\b([a-zA-Z]+)\b/g, (word) => {
+    const up = word.toUpperCase();
+    if (UPPERCASE_WORDS.has(up)) return up;
+    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+  });
+
+const cleanName = (name) =>
+  toTitleCase(String(name || '').trim())
+    .replace(/[\s\-–]+growth\s+plan[\s\-–]+growth\s+option/gi, ' (Growth)')
+    .replace(/[\s\-–]+growth\s+plan[\s\-–]+growth/gi, ' (Growth)')
+    .replace(/[\s\-–]+growth\s+plan/gi, ' (Growth)')
+    .replace(/[\s\-–]+growth\s+option/gi, ' (Growth)')
+    .replace(/\s*\(Growth\)\s*\(Growth\)/gi, ' (Growth)')
+    .replace(/[\s\-–]+payout\s+of\s+income\s+distribution\s+cum\s*capital\s+withdrawal\s+option/gi, ' (IDCW)')
+    .replace(/[\s\-–]+income\s+distribution\s+cum\s+capital\s+withdrawal\s+option/gi, ' (IDCW)')
+    .replace(/[\s\-–]+income\s+cum\s+distribution\s+withdrawal\s+option/gi, ' (IDCW)')
+    .replace(/[\s\-–]+idcw\s+option/gi, ' (IDCW)')
+    .replace(/[\s\-–]+idcw\s+payout/gi, ' (IDCW)')
+    .replace(/[\s\-–]+idcw/gi, ' (IDCW)')
+    .replace(/\s*\(IDCW\)\s*\(IDCW\)/gi, ' (IDCW)')
+    .replace(/[\s\-–]+cumulative\s+option/gi, ' (Growth)')
+    .replace(/[\s\-–]+growth$/gi, ' (Growth)')
+    .replace(/\(idcw\)/gi, '(IDCW)')
+    .trim();
 
 const isGrowthLike = (schemeName) => {
   const s = normalize(schemeName);
@@ -213,49 +210,20 @@ const FundsTable = () => {
     const funds = Array.isArray(indexData?.funds) ? indexData.funds : [];
     const buckets = { Equity: [], Debt: [], ELSS: [], Hybrid: [] };
 
-    const pickBestMatch = (targetName, targetAmc) => {
-      const tn = normalize(targetName);
-      const ta = normalize(targetAmc);
-      const targetTokens = toTokens(targetName).filter((t) => !NAME_STOPWORDS.has(t));
-      const filtered = funds.filter((f) => {
-        const amc = normalize(f.fund_house);
-        return amc.includes(ta) || ta.includes(amc) || (ta.includes('kotak') && amc.includes('kotak'));
-      });
-      const nameFiltered = filtered.filter((f) => {
-        const sn = normalize(f.scheme_name);
-        if (sn.includes(tn)) return true;
-
-        // Strict token matching so curated rows don't accidentally bind to another scheme.
-        const schemeTokens = new Set(toTokens(f.scheme_name).filter((t) => !NAME_STOPWORDS.has(t)));
-        return targetTokens.length > 0 && targetTokens.every((t) => schemeTokens.has(t));
-      });
-      const pool = nameFiltered;
-      if (!pool.length) return null;
-
-      const scored = [...pool].sort((a, b) => {
-        const ag = isGrowthLike(a.scheme_name) ? 1 : 0;
-        const bg = isGrowthLike(b.scheme_name) ? 1 : 0;
-        if (bg !== ag) return bg - ag;
-        const a1 = toNum(a.cagr_1y) ?? -9999;
-        const b1 = toNum(b.cagr_1y) ?? -9999;
-        if (b1 !== a1) return b1 - a1;
-        const a3 = toNum(a.cagr_3y) ?? -9999;
-        const b3 = toNum(b.cagr_3y) ?? -9999;
-        if (b3 !== a3) return b3 - a3;
-        const a5 = toNum(a.cagr_5y) ?? -9999;
-        const b5 = toNum(b.cagr_5y) ?? -9999;
-        return b5 - a5;
-      });
-      return scored[0];
-    };
-
-    TABS.forEach((tab) => {
-      const curatedList = CURATED_FUNDS[tab] || [];
-      curatedList.forEach((target) => {
-        const f = pickBestMatch(target.name, target.amc);
-        if (!f) return;
-        buckets[tab].push({
-          name: target.name,
+    const top5 = (pool) =>
+      [...pool]
+        .filter((f) => isGrowthLike(f.scheme_name) && toNum(f.cagr_5y) !== null)
+        .sort((a, b) => {
+          const a5 = toNum(a.cagr_5y) ?? -9999;
+          const b5 = toNum(b.cagr_5y) ?? -9999;
+          if (b5 !== a5) return b5 - a5;
+          const a3 = toNum(a.cagr_3y) ?? -9999;
+          const b3 = toNum(b.cagr_3y) ?? -9999;
+          return b3 - a3;
+        })
+        .slice(0, 5)
+        .map((f) => ({
+          name: cleanName(f.scheme_name),
           cat: categoryShort(f.scheme_category),
           r1: toNum(f.cagr_1y),
           r3: toNum(f.cagr_3y),
@@ -263,9 +231,12 @@ const FundsTable = () => {
           risk: inferRisk(f),
           amc: f.fund_house,
           schemeCode: f.scheme_code,
-        });
-      });
-    });
+        }));
+
+    buckets.ELSS    = top5(funds.filter((f) => isElss(f.scheme_category)));
+    buckets.Equity  = top5(funds.filter((f) => !isElss(f.scheme_category) && String(f.scheme_category).startsWith('Equity Scheme')));
+    buckets.Debt    = top5(funds.filter((f) => String(f.scheme_category).startsWith('Debt Scheme')));
+    buckets.Hybrid  = top5(funds.filter((f) => String(f.scheme_category).startsWith('Hybrid Scheme')));
 
     return buckets;
   }, [indexData]);
