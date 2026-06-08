@@ -66,10 +66,14 @@ const PAGE_META = {
   },
 };
 
+const DEFAULT_META = {
+  title: 'RupyaNivesh | Mutual Fund Distributor',
+  description: 'RupyaNivesh — SEBI-registered mutual fund distributor. Invest in top mutual funds with expert guidance.',
+};
+
 const PageHelmet = () => {
   const { pathname } = useLocation();
-  const meta = PAGE_META[pathname];
-  if (!meta) return null;
+  const meta = PAGE_META[pathname] ?? DEFAULT_META;
   return (
     <Helmet>
       <title>{meta.title}</title>
