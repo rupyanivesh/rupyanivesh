@@ -1242,6 +1242,15 @@ const DetailView = ({ schemeCode }) => {
       <Helmet>
         <title>{schemeName} | RupyaNivesh</title>
         <meta name="description" content={`${schemeName} by ${fundHouse}. Explore NAV history, performance metrics, and returns for this ${category}.`} />
+        <link rel="canonical" href={`https://rupyanivesh.in/explore-funds/${fund.scheme_code}`} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={`https://rupyanivesh.in/explore-funds/${fund.scheme_code}`} />
+        <meta property="og:title" content={`${schemeName} | RupyaNivesh`} />
+        <meta property="og:description" content={`${schemeName} by ${fundHouse}. ${category}.`} />
+        <meta property="og:image" content="https://rupyanivesh.in/rupyanivesh-logo.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`${schemeName} | RupyaNivesh`} />
+        <meta name="twitter:description" content={`${schemeName} by ${fundHouse}. ${category}.`} />
       </Helmet>
       <div className={WIDE_WRAP}>
         {/* Mobile back arrow */}

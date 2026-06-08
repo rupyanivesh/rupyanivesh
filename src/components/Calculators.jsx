@@ -2655,6 +2655,26 @@ export const CalculatorPage = () => {
       <Helmet>
         <title>{tool.title} | RupyaNivesh</title>
         <meta name="description" content={tool.desc} />
+        <link rel="canonical" href={`https://rupyanivesh.in/${tool.id}-calculator`} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={`https://rupyanivesh.in/${tool.id}-calculator`} />
+        <meta property="og:title" content={`${tool.title} | RupyaNivesh`} />
+        <meta property="og:description" content={tool.desc} />
+        <meta property="og:image" content="https://rupyanivesh.in/rupyanivesh-logo.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`${tool.title} | RupyaNivesh`} />
+        <meta name="twitter:description" content={tool.desc} />
+        {tool.faqs && (
+          <script type="application/ld+json">{JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: tool.faqs.map(faq => ({
+              '@type': 'Question',
+              name: faq.q,
+              acceptedAnswer: { '@type': 'Answer', text: faq.a },
+            })),
+          })}</script>
+        )}
       </Helmet>
       <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_70%_70%,rgba(197,160,89,0.10),transparent_60%)] pointer-events-none" />
       <div className="max-w-[1680px] mx-auto px-5 lg:px-8 xl:px-10 relative z-10 w-full">

@@ -71,13 +71,43 @@ const DEFAULT_META = {
   description: 'RupyaNivesh — SEBI-registered mutual fund distributor. Invest in top mutual funds with expert guidance.',
 };
 
+const OG_IMAGE = 'https://rupyanivesh.in/rupyanivesh-logo.png';
+const BASE_URL = 'https://rupyanivesh.in';
+
 const PageHelmet = () => {
   const { pathname } = useLocation();
+
+  if (pathname.startsWith('/mfd')) {
+    return (
+      <Helmet>
+        <title>MFD Portal | RupyaNivesh</title>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
+    );
+  }
+
   const meta = PAGE_META[pathname] ?? DEFAULT_META;
+  const canonical = `${BASE_URL}${pathname}`;
+
   return (
     <Helmet>
       <title>{meta.title}</title>
       <meta name="description" content={meta.description} />
+      <link rel="canonical" href={canonical} />
+
+      {/* Open Graph */}
+      <meta property="og:type" content="website" />
+      <meta property="og:url" content={canonical} />
+      <meta property="og:title" content={meta.title} />
+      <meta property="og:description" content={meta.description} />
+      <meta property="og:image" content={OG_IMAGE} />
+      <meta property="og:site_name" content="RupyaNivesh" />
+
+      {/* Twitter / X */}
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={meta.title} />
+      <meta name="twitter:description" content={meta.description} />
+      <meta name="twitter:image" content={OG_IMAGE} />
     </Helmet>
   );
 };

@@ -3,7 +3,7 @@ import { TrendingUp, BarChart3, PieChart, ArrowUpRight, CheckCircle2, ChevronRig
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import HeroFloatingCards from './HeroFloatingCards';
-import bgImage from '../assets/bg2.png';
+import bgImage from '../assets/bg2.webp';
 
 const fmt = (n) => {
   if (n >= 10000000) return `₹${(n / 10000000).toFixed(1)}Cr`;
