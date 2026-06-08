@@ -3,11 +3,11 @@
   <head>
     <meta charset="utf-8">
     <script>
-      var path = window.location.pathname.replace('/rupyanivesh', '') || '/';
+      var path = window.location.pathname || '/';
       var search = window.location.search;
       var hash = window.location.hash;
       sessionStorage.setItem('redirect', path + search + hash);
-      window.location.replace('/rupyanivesh/');
+      window.location.replace('/');
     </script>
   </head>
   <body></body>
