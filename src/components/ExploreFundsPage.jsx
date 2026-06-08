@@ -1,4 +1,5 @@
 ﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 
 const UPPERCASE_WORDS = new Set([
   'SBI','HDFC','ICICI','AXIS','DSP','UTI','LIC','IDBI','BOI','HSBC','JM',
@@ -1232,8 +1233,16 @@ const DetailView = ({ schemeCode }) => {
   if (loading) return <section className="pt-28 pb-16"><div className={WIDE_WRAP}><p className="text-sm text-navy-900/60">Loading fund details...</p></div></section>;
   if (!fund || fund.error) return <section className="pt-28 pb-16"><div className={WIDE_WRAP}><p className="text-sm text-rose-600">Fund not found.</p></div></section>;
 
+  const schemeName = fund.meta?.scheme_name || 'Mutual Fund';
+  const fundHouse = fund.meta?.fund_house || 'RupyaNivesh';
+  const category = fund.meta?.scheme_category || 'Mutual Fund';
+
   return (
     <section className="pt-28 pb-16">
+      <Helmet>
+        <title>{schemeName} | RupyaNivesh</title>
+        <meta name="description" content={`${schemeName} by ${fundHouse}. Explore NAV history, performance metrics, and returns for this ${category}.`} />
+      </Helmet>
       <div className={WIDE_WRAP}>
         {/* Mobile back arrow */}
         <div className="md:hidden mb-3">

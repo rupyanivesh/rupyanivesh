@@ -1,4 +1,5 @@
 ﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate, useParams, Navigate } from 'react-router-dom';
 import {
@@ -2651,6 +2652,10 @@ export const CalculatorPage = () => {
 
   return (
     <section className="pt-24 pb-12 md:pt-40 md:pb-24 bg-[#F8F5EF] min-h-screen relative overflow-hidden">
+      <Helmet>
+        <title>{tool.title} | RupyaNivesh</title>
+        <meta name="description" content={tool.desc} />
+      </Helmet>
       <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_70%_70%,rgba(197,160,89,0.10),transparent_60%)] pointer-events-none" />
       <div className="max-w-[1680px] mx-auto px-5 lg:px-8 xl:px-10 relative z-10 w-full">
         <Link

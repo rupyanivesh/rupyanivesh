@@ -1,5 +1,6 @@
 import React, { Suspense, lazy, useEffect } from 'react'
-import { HashRouter as Router, Navigate, Routes, Route, useLocation, useNavigationType } from 'react-router-dom'
+import { BrowserRouter as Router, Navigate, Routes, Route, useLocation, useNavigationType } from 'react-router-dom'
+import { HelmetProvider, Helmet } from 'react-helmet-async'
 import Header from './components/Header'
 import Hero from './components/Hero'
 import AMCLogos from './components/AMCLogos'
@@ -29,6 +30,53 @@ const LoginPage = lazy(() => import('./features/mfd-dashboard/pages/LoginPage'))
 const SignupPage = lazy(() => import('./features/mfd-dashboard/pages/SignupPage'))
 const OtpPage = lazy(() => import('./features/mfd-dashboard/pages/OtpPage'))
 const ForgotPasswordPage = lazy(() => import('./features/mfd-dashboard/pages/ForgotPasswordPage'))
+
+const PAGE_META = {
+  '/': {
+    title: 'RupyaNivesh | Trusted Mutual Fund Distributor',
+    description: 'SEBI-registered mutual fund distributor offering expert guidance, SIP calculators, and curated fund research to grow your wealth systematically.',
+  },
+  '/contact': {
+    title: 'Contact Us | RupyaNivesh',
+    description: 'Get in touch with RupyaNivesh to start your mutual fund investment journey. Book a free consultation with our expert advisors.',
+  },
+  '/learn-finance': {
+    title: 'Learn Finance | RupyaNivesh',
+    description: 'Explore curated finance articles and guides to understand mutual funds, SIP, ELSS, and smart investing strategies.',
+  },
+  '/explore-funds': {
+    title: 'Explore Mutual Funds | RupyaNivesh',
+    description: 'Browse and compare top-performing mutual funds across categories. Find the right fund for your investment goals.',
+  },
+  '/privacy-policy': {
+    title: 'Privacy Policy | RupyaNivesh',
+    description: 'Read the RupyaNivesh privacy policy to understand how we collect, use, and protect your personal information.',
+  },
+  '/terms-and-conditions': {
+    title: 'Terms & Conditions | RupyaNivesh',
+    description: 'Review the terms and conditions governing the use of the RupyaNivesh platform and services.',
+  },
+  '/investor-charter': {
+    title: 'Investor Charter | RupyaNivesh',
+    description: 'Learn about your rights and responsibilities as a mutual fund investor under SEBI guidelines.',
+  },
+  '/grievance-redressal': {
+    title: 'Grievance Redressal | RupyaNivesh',
+    description: 'Know how to raise and resolve grievances with RupyaNivesh in line with SEBI regulations.',
+  },
+};
+
+const PageHelmet = () => {
+  const { pathname } = useLocation();
+  const meta = PAGE_META[pathname];
+  if (!meta) return null;
+  return (
+    <Helmet>
+      <title>{meta.title}</title>
+      <meta name="description" content={meta.description} />
+    </Helmet>
+  );
+};
 
 const MfdRouteFallback = () => (
   <div className="min-h-screen grid place-items-center bg-[#FAF9F6] text-navy-900/70 text-sm">
@@ -150,10 +198,13 @@ const AppLayout = () => {
 
 function App() {
   return (
-    <Router>
-      <ScrollToTop />
-      <AppLayout />
-    </Router>
+    <HelmetProvider>
+      <Router>
+        <ScrollToTop />
+        <PageHelmet />
+        <AppLayout />
+      </Router>
+    </HelmetProvider>
   )
 }
 
