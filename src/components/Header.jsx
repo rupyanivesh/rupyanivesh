@@ -164,7 +164,7 @@ const Header = () => {
             <span className="text-lg font-serif font-bold text-navy-900">Tools</span>
             {[
               { label: 'SIP Calculator', to: '/sip-calculator' },
-              { label: 'Retirement Planner', to: '/retirement-calculator' },
+              { label: 'Retirement Goal Calculator', to: '/retirement-calculator' },
               { label: 'Lumpsum Calculator', to: '/lumpsum-calculator' },
               { label: 'Education Calculator', to: '/education-calculator' },
               { label: 'Inflation Calculator', to: '/inflation-calculator' },

@@ -90,7 +90,7 @@ const ContactUs = () => {
             {/* Contact details */}
             <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
               {[
-                { icon: Phone, label: 'Phone', value: '+91 88899-98057', href: 'tel:+918889998057' },
+                { icon: Phone, label: 'Phone', value: '+91 888-999-8057', href: 'tel:+918889998057' },
                 { icon: Mail, label: 'Email', value: 'info@rupyanivesh.in', href: 'mailto:info@rupyanivesh.in' },
                 { icon: MapPin, label: 'Address', value: '2nd Floor, Plot No. 02, Sector-13, Hisar-125005 (Haryana)', href: null },
                 { icon: Clock, label: 'Hours', value: 'Mon – Fri, 9:30 AM – 6:00 PM', href: null },
@@ -165,7 +165,6 @@ const ContactUs = () => {
                 <>
                   <div className="mb-8">
                     <h3 className="text-navy-900 font-serif font-bold text-2xl lg:text-3xl mb-1">Send a Message</h3>
-                    <p className="text-gray-400 text-sm">We'll respond within 1 business day.</p>
                   </div>
 
                   <form className="space-y-5" onSubmit={handleSubmit} noValidate>
@@ -221,7 +220,7 @@ const ContactUs = () => {
                     </button>
 
                     <p className="text-[10px] text-gray-400 leading-relaxed text-center pt-1">
-                      By submitting, you consent to RupyaNivesh (Shubh Lakshmi Wealth) collecting your contact information for communication purposes in accordance with SEBI and AMFI guidelines. Your data is kept strictly confidential.
+                      By submitting your details, you consent to the collection and use of your contact information for communication purposes, in accordance with applicable SEBI and AMFI guidelines. Your information will be kept confidential.
                     </p>
                   </form>
                 </>

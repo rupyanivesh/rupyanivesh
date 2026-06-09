@@ -1,4 +1,7 @@
 ﻿import React, { useState } from 'react';
+import logo from '../assets/logo.png';
+import emblem from '../assets/embelem dark.png';
+import logoDark from '../assets/LOGO DARK.png';
 import {
   Mail, Phone, MapPin, MessageCircle, ExternalLink, X,
   Globe, Share2, Shield, Scale, BookOpen,
@@ -106,7 +109,7 @@ export const PrivacyPolicyContent = () => (
     <p>We use essential cookies for website functionality and analytics cookies (with consent) to understand site usage. You can disable non-essential cookies in your browser settings without affecting core features.</p>
 
     <SH>9. Contact for Privacy Matters</SH>
-    <p>Email: <strong>info@rupyanivesh.in</strong> &nbsp;|&nbsp; Phone: <strong>+91 88899-98057</strong><br />Address: 2nd Floor, Plot No. 02, Sector-13, Hisar-125005 (Haryana)</p>
+    <p>Email: <strong>info@rupyanivesh.in</strong> &nbsp;|&nbsp; Phone: <strong>+91 888-999-8057</strong><br />Address: 2nd Floor, Plot No. 02, Sector-13, Hisar-125005 (Haryana)</p>
 
     <SH>10. Updates to This Policy</SH>
     <p>We may revise this policy periodically. Material changes will be notified via email or a prominent notice on our website at least 15 days before taking effect.</p>
@@ -223,7 +226,7 @@ export const InvestorCharterContent = () => (
 
     <SH>G. Grievance Redressal</SH>
     <ol className="list-decimal pl-5 space-y-1.5">
-      <li>Email: <strong>info@rupyanivesh.in</strong> | Phone: <strong>+91 88899-98057</strong> - response within 10 business days</li>
+      <li>Email: <strong>info@rupyanivesh.in</strong> | Phone: <strong>+91 888-999-8057</strong> - response within 10 business days</li>
       <li>Respective AMC customer care (details on AMC websites)</li>
       <li>SEBI SCORES: <a href="https://scores.sebi.gov.in" target="_blank" rel="noopener noreferrer" className="text-gold underline">scores.sebi.gov.in</a> | Toll-free: 1800-266-7575</li>
       <li>SMART ODR: <a href="https://smartodr.in" target="_blank" rel="noopener noreferrer" className="text-gold underline">smartodr.in</a></li>
@@ -240,7 +243,7 @@ export const GrievanceContent = () => (
       <strong>AMFI Circular:</strong> Best Practices Guidelines - Grievance Handling by Mutual Fund Distributors
     </InfoBox>
 
-    <p>Rupya Nivesh is a brand operated by Shubh Lakshmi Wealth, an AMFI-Registered Mutual Fund Distributor (ARN-361484). This Grievance Redressal Policy applies to services offered through the Rupya Nivesh platform and administered by Shubh Lakshmi Wealth.</p>
+    <p>RupyaNivesh is a brand operated by Shubh Lakshmi Wealth, an AMFI-Registered Mutual Fund Distributor (ARN-361484). This Grievance Redressal Policy applies to services offered through the RupyaNivesh platform and administered by Shubh Lakshmi Wealth.</p>
     <SH>Our Commitment</SH>
     <p>We are committed to prompt, fair, and transparent resolution of all investor complaints in accordance with SEBI and AMFI guidelines. We treat every complaint as an opportunity to improve our services.</p>
 
@@ -251,7 +254,7 @@ export const GrievanceContent = () => (
       <p><strong>AMFI Registration:</strong> ARN-361484</p>
       <p><strong>Brand:</strong> RupyaNivesh</p>
       <p><strong>Email:</strong> info@rupyanivesh.in</p>
-      <p><strong>Phone:</strong> +91 88899-98057 (Mon - Fri, 9:30 AM - 6:00 PM)</p>
+      <p><strong>Phone:</strong> +91 888-999-8057 (Mon - Fri, 9:30 AM - 6:00 PM)</p>
       <p><strong>Registered Address:</strong> 2nd Floor, Plot No. 02, Sector-13, Hisar-125005 (Haryana)</p>
       <p><strong>Acknowledgement:</strong> Within 3 business days of receiving complaint</p>
       <p><strong>Resolution Target:</strong> Within 10 business days of acknowledgement</p>
@@ -350,8 +353,8 @@ const Footer = () => {
     {
       label: 'Goal Based',
       tools: [
-        { label: 'Retirement Planner', to: '/retirement-calculator' },
-        { label: 'Education Goal', to: '/education-calculator' },
+        { label: 'Retirement Goal Calculator', to: '/retirement-calculator' },
+        { label: 'Education Goal Calculator', to: '/education-calculator' },
         { label: 'Inflation Tracker', to: '/inflation-calculator' },
         { label: 'Wedding Goal', to: '/wedding-goal-calculator' },
         { label: 'House Purchase Goal', to: '/house-goal-calculator' },
@@ -435,12 +438,10 @@ const Footer = () => {
 
             {/* Col 1 - Brand */}
             <div>
-              <Link to="/" className="flex items-center gap-2 mb-5 group w-fit" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-                <div className="w-8 h-8 bg-gold rounded flex items-center justify-center">
-                  <span className="text-navy-900 font-serif font-bold italic">RN</span>
-                </div>
-                <span className="text-xl font-serif font-bold tracking-tight">Rupya<span style={{color:'#B0894A'}}>Nivesh</span></span>
+              <Link to="/" className="flex items-center -mb-4 -mt-8 group w-fit" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                <img src={logoDark} alt="RupyaNivesh" className="h-24 w-auto object-contain" />
               </Link>
+              <div className="mt-4"></div>
               <p className="text-gray-400 text-sm leading-relaxed mb-2">
                 RupyaNivesh is a brand operated by Shubh Lakshmi Wealth, a Partnership Firm and AMFI-Registered Mutual Fund Distributor.
               </p>
@@ -546,7 +547,7 @@ const Footer = () => {
                     <div className="w-8 h-8 bg-white/5 rounded-full flex items-center justify-center shrink-0 group-hover:bg-gold/10 transition-colors">
                       <Phone size={14} className="text-gold" />
                     </div>
-                    +91 88899-98057
+                    +91 888-999-8057
                   </a>
                 </li>
                 <li>
@@ -614,10 +615,10 @@ const Footer = () => {
                 Mutual fund investments are subject to market risks. Read all scheme-related documents carefully before investing. Past performance is not an indicator of future returns.
               </p>
               <p><strong className="text-gray-400">Risk Disclosure:</strong> The value of investments and the income therefrom are subject to market fluctuations and may go up or down based on various factors including but not limited to interest rate movements, credit events, liquidity conditions, and macroeconomic developments. Investors may not get back the principal amount invested.</p>
-              <p id="issue-footer-commission-disclosure"><strong className="text-gray-400">Commission Disclosure (SEBI Circular SEBI/IMD/CIR No.4/168230/09 dated June 30, 2009):</strong> RupyaNivesh is a brand operated by Shubh Lakshmi Wealth, an AMFI-Registered Mutual Fund Distributor (ARN-361484). We receive upfront and/or trail commissions from Asset Management Companies (AMCs) for distributing Regular Plan mutual fund units. Transaction-specific commission disclosure is available on request.</p>
-              <p id="issue-footer-nonadvisory-disclosure"><strong className="text-gray-400">Non-Advisory Disclosure:</strong> RupyaNivesh is NOT a SEBI-registered Investment Adviser (RIA) under SEBI (Investment Advisers) Regulations, 2013. We do not provide personalised investment advice, portfolio management, financial planning, or securities trading recommendations. All content on this website is for general informational and educational purposes only and shall not be construed as investment advice or a solicitation to invest.</p>
+              <p id="issue-footer-commission-disclosure"><strong className="text-gray-400">Commission Disclosure (SEBI Circular SEBI/IMD/CIR No.4/168230/09 dated June 30, 2009):</strong> RupyaNivesh is a brand operated by Shubh Lakshmi Wealth, an AMFI-Registered Mutual Fund Distributor (ARN-361484). Commission is received from respective Asset Management Companies (AMCs) for distribution of mutual fund products, as permitted under applicable regulations. Transaction-specific commission disclosure is available on request.</p>
+              <p id="issue-footer-nonadvisory-disclosure"><strong className="text-gray-400">Non-Advisory Disclosure:</strong> RupyaNivesh is NOT a SEBI-registered Investment Adviser (RIA) under SEBI (Investment Advisers) Regulations, 2013. We do not provide personalised investment advice, portfolio management, financial planning, or securities trading recommendations. The information provided on this website is for general informational purposes only and should not be construed as investment advice, investment recommendation, or solicitation to invest in any mutual fund scheme or financial product.</p>
               <p><strong className="text-gray-400">KYC Requirement:</strong> KYC (Know Your Customer) is a mandatory one-time exercise. Investors should complete KYC with any SEBI-registered KYC Registration Agency (KRA) before investing. For KYC-related grievances, contact SEBI SCORES at <a href="https://scores.sebi.gov.in" target="_blank" rel="noopener noreferrer" className="text-gold underline">scores.sebi.gov.in</a>.</p>
-              <p><strong className="text-gray-400">Direct Plan Option:</strong> Investors have the option to invest directly through the AMC's Direct Plan, which has a lower expense ratio. By choosing Regular Plans through RupyaNivesh, investors benefit from our distribution and servicing support, for which we receive the commission disclosed above.</p>
+              <p><strong className="text-gray-400">Direct Plan Option:</strong> Investors may invest in mutual fund schemes through Direct Plans or Regular Plans. Regular Plans involve distribution and transaction-related services provided by mutual fund distributors, for which commission is paid by the respective AMC in accordance with applicable regulations.</p>
               <p><strong className="text-gray-400">Regulatory Oversight:</strong> RupyaNivesh operates under the regulatory framework of the Securities and Exchange Board of India (SEBI) and the Association of Mutual Funds in India (AMFI). We adhere to the AMFI Code of Conduct for Intermediaries, SEBI (Mutual Funds) Regulations 1996, Prevention of Money Laundering Act 2002, and all applicable SEBI circulars and AMFI best practice guidelines.</p>
             </div>
 
@@ -639,7 +640,7 @@ const Footer = () => {
 
           {/* Bottom Bar */}
           <div className="text-[10px] text-gray-600 font-medium flex flex-col md:flex-row items-center justify-between gap-3">
-            <span>© {new Date().getFullYear()} RupyaNivesh. All rights reserved.</span>
+            <span>© {new Date().getFullYear()} RupyaNivesh | Shubh Lakshmi Wealth (ARN-361484) | All Rights Reserved.</span>
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Link to="/privacy-policy" className="hover:text-gold transition-colors uppercase tracking-[0.15em]">Privacy Policy</Link>
               <span className="opacity-20">|</span>

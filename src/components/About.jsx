@@ -1,11 +1,13 @@
 ﻿import { useState } from 'react';
+import logo from '../assets/logo.png';
+import emblem from '../assets/embelem light.png';
 import { motion, useMotionValue, useTransform, useSpring, useMotionTemplate, AnimatePresence } from 'framer-motion';
 import { ShieldCheck, Headset, PieChart, LayoutDashboard, ChevronDown } from 'lucide-react';
 
 const highlights = [
   { title: 'Investment Options', desc: 'Access a range of mutual fund categories across different investment preferences.', icon: PieChart, accent: 'from-gold/8' },
   { title: 'Transparent Framework', desc: 'Designed to present information with clarity and consistency.', icon: ShieldCheck, accent: 'from-navy-900/5' },
-  { title: 'Easy-to-Use Platform', desc: 'Simple interface designed for convenient access and tracking.', icon: LayoutDashboard, accent: 'from-gold/8' },
+  { title: 'Seamless Transactions', desc: 'Supporting investors through streamlined mutual fund processes.', icon: LayoutDashboard, accent: 'from-gold/8' },
   { title: 'Customer Support', desc: 'Assistance available to address scheme-related queries.', icon: Headset, accent: 'from-navy-900/5' }
 ];
 
@@ -92,15 +94,18 @@ const About = () => {
       <div className="container-custom">
         <div className="grid lg:grid-cols-2 gap-10 lg:gap-20 items-start">
           <div>
-            <h2 className="text-3xl md:text-5xl font-serif font-bold text-navy-900 mb-8 leading-tight">
-              <span className="text-gold italic">Why Us?</span> <br />
-              We're Not a Bank. <br /> We're Not an App. <br />
-              <span className="text-gold italic">We're Your Trust Partner.</span>
-            </h2>
+            <div className="mb-10">
+              <h2 className="font-serif font-bold leading-[1.12]">
+                <span className="text-[2rem] md:text-[2.6rem] block text-gold italic mb-1">Why Us?</span>
+                <span className="text-[2.4rem] md:text-[3.2rem] block text-navy-900">Mutual Fund Investing.</span>
+                <span className="text-[2.4rem] md:text-[3.2rem] block text-navy-900">Made Simple,</span>
+                <span className="text-[2.4rem] md:text-[3.2rem] block text-gold italic">for Everyone.</span>
+              </h2>
+            </div>
 
-            <div className="space-y-6 text-gray-600 leading-relaxed text-lg">
-              <p>
-                RupyaNivesh is built for today's investors who expect clarity, accessibility, and ease of use. As financial products and markets evolve, having the right tools and information becomes increasingly important.
+            <div className="space-y-5">
+              <p className="text-[1.05rem] md:text-[1.15rem] text-navy-900/70 leading-[1.9]">
+                RupyaNivesh is focused on making access to mutual fund services simpler, more transparent, and easier to navigate for investors.
               </p>
 
               {/* Mobile: collapsible content */}
@@ -112,19 +117,37 @@ const About = () => {
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.35, ease: 'easeInOut' }}
-                    className="lg:hidden overflow-hidden space-y-6"
+                    className="lg:hidden overflow-hidden space-y-5"
                   >
-                    <p>
-                      We provide a digital platform that combines technology with user support to help investors access mutual fund investments and stay aligned with their financial goals. Our focus is on simplifying processes, improving transparency, and making investment information easier to understand.
+                    <p className="text-base text-navy-900/70 leading-[1.9]">
+                      Through established industry platforms and infrastructure, investors can access mutual fund schemes offered by various Asset Management Companies (AMCs), complete transaction-related processes, and receive assistance for operational requirements.
                     </p>
+                    <p className="text-base text-navy-900/70 leading-[1.9]">
+                      Our approach emphasizes clear communication, streamlined processes, and responsive support to help create a smooth and convenient experience throughout the investment journey.
+                    </p>
+                    <div className="relative pl-5 border-l-[3px] border-gold">
+                      <p className="text-[0.95rem] text-navy-900/70 leading-[1.9] italic">
+                        Built with a <span className="font-semibold text-gold">service-first mindset,</span> RupyaNivesh focuses on accessibility, professionalism, and long-term investor relationships.
+                      </p>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
 
               {/* Desktop: always visible */}
-              <p className="hidden lg:block">
-                We provide a digital platform that combines technology with user support to help investors access mutual fund investments and stay aligned with their financial goals. Our focus is on simplifying processes, improving transparency, and making investment information easier to understand.
-              </p>
+              <div className="hidden lg:block space-y-5">
+                <p className="text-[1.05rem] md:text-[1.15rem] text-navy-900/70 leading-[1.9]">
+                  Through established industry platforms and infrastructure, investors can access mutual fund schemes offered by various Asset Management Companies (AMCs), complete transaction-related processes, and receive assistance for operational requirements.
+                </p>
+                <p className="text-[1.05rem] md:text-[1.15rem] text-navy-900/70 leading-[1.9]">
+                  Our approach emphasizes clear communication, streamlined processes, and responsive support to help create a smooth and convenient experience throughout the investment journey.
+                </p>
+                <div className="relative pl-5 border-l-[3px] border-gold">
+                  <p className="text-[1rem] md:text-[1.05rem] text-navy-900/70 leading-[1.9] italic">
+                    Built with a <span className="font-semibold text-gold">service-first mindset,</span> RupyaNivesh focuses on accessibility, professionalism, and long-term investor relationships.
+                  </p>
+                </div>
+              </div>
 
               {/* Read More toggle - mobile only */}
               <button
@@ -137,14 +160,6 @@ const About = () => {
                 </motion.div>
               </button>
 
-              <div className="hidden lg:block relative p-6 md:p-8 bg-navy-900 rounded-[24px] shadow-premium mt-8 overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gold/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:bg-gold/20 transition-all duration-700" />
-                <div className="absolute top-4 left-4 md:left-6 text-7xl text-white/5 font-serif leading-none -translate-y-2">"</div>
-                <blockquote className="relative z-10 font-serif text-xl md:text-[30px] text-gold italic leading-relaxed pl-4 border-l-[3px] border-gold/30">
-                  <span className="block text-gold/80 text-lg mb-2">As Benjamin Franklin said we believe ~</span>
-                  <span className="block">"An investment in knowledge pays the best interest."</span>
-                </blockquote>
-              </div>
             </div>
 
           </div>
@@ -152,14 +167,13 @@ const About = () => {
           {/* Right column - stats + cards + ARN badge */}
           <div className="flex flex-col gap-4 lg:gap-6">
 
-            {/* Mission Statement Card */}
-            <div className="hidden lg:block relative bg-navy-900 rounded-2xl px-7 py-5 overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gold/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
-              <div className="absolute top-3 left-5 text-6xl text-white/5 font-serif leading-none">"</div>
-              <p className="relative z-10 font-serif italic text-white/90 text-lg leading-relaxed pl-3 border-l-2 border-gold/40">
-                Built to make mutual fund distribution accessible and transparent for every Indian family.
-              </p>
-              <span className="relative z-10 block mt-3 text-[10px] font-black uppercase tracking-[0.25em] text-gold/70 pl-3">Our Founding Mission</span>
+            {/* We Believe Card */}
+            <div className="hidden lg:block relative bg-navy-900 rounded-2xl px-7 py-5 overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gold/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:bg-gold/20 transition-all duration-700" />
+              <blockquote className="relative z-10 font-serif text-[1.2rem] md:text-[1.4rem] text-gold italic leading-relaxed pl-4 border-l-[3px] border-gold/30">
+                <span className="block text-gold/80 text-[0.85rem] font-sans not-italic font-semibold uppercase tracking-widest mb-3">We believe ~</span>
+                <span className="block">"Simple processes and clear communication create better investing experiences."</span>
+              </blockquote>
             </div>
 
             {/* 2x2 Card grid */}
@@ -172,8 +186,8 @@ const About = () => {
 
             {/* ARN badge - moved from left column */}
             <div className="flex items-center gap-5 bg-white px-6 py-4 rounded-2xl shadow-sm border border-gray-100">
-              <div className="w-12 h-12 rounded-full bg-gold/10 flex items-center justify-center shrink-0">
-                <span className="font-serif font-bold text-navy-900 text-lg">RN</span>
+              <div className="rounded-full overflow-hidden shrink-0" style={{ width: '64px', height: '64px' }}>
+                <img src={emblem} alt="RupyaNivesh emblem" className="w-full h-full object-cover" />
               </div>
               <div>
                 <h4 className="font-bold text-navy-900 text-sm">AMFI Registered Distributor</h4>

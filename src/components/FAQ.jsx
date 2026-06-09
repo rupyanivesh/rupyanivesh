@@ -16,8 +16,8 @@ const faqs = [
     a: "Yes! Mutual fund investing is inclusive. Many schemes allow SIPs starting at ₹500 per month. Consistency in investing is key. Returns are subject to market conditions and are not guaranteed."
   },
   {
-    q: "Do you charge any separate fees for consultation?",
-    a: "No. As a distributor, we earn a small commission from the Asset Management Companies (AMCs) for the service and ongoing support we provide to you. This is transparently disclosed. Our consultation, portfolio review, and planning services are free for our investors."
+    q: "Do you charge any separate fees for services?",
+    a: "No. As a distributor, we earn a small commission from the Asset Management Companies (AMCs) for the service and ongoing support we provide to you. This is transparently disclosed."
   },
   {
     q: "What happens if the market falls 20% suddenly?",
@@ -25,11 +25,11 @@ const faqs = [
   },
   {
     q: "Difference between Direct and Regular plans?",
-    a: "Direct plans have a lower expense ratio because no distributor is involved, but you must do all the research, selection, tracking, and tax-filing yourself. Regular plans (which we offer) include distributor support, transaction assistance, and general information — for which we receive a commission from the AMC, which is disclosed. Direct plans may have a lower expense ratio but require investors to manage everything independently."
+    a: "Direct plans do not involve distributor commission and may have a lower expense ratio compared to regular plans. Under regular plans, investors may avail ongoing services such as transaction facilitation, operational assistance, and investor support through a mutual fund distributor, for which commission is paid by the respective AMC in accordance with applicable SEBI and AMFI regulations."
   },
   {
     q: "Can I withdraw my money anytime?",
-    a: "Generally, yes. Most mutual funds are 'open-ended,' meaning you can withdraw (redeem) anytime and the money arrives in 2-3 working days. The only common exception is ELSS (Tax Saving) funds, which have a 3-year lock-in."
+    a: "In most open-ended mutual fund schemes, investors may redeem their units at any time, subject to applicable exit load, scheme terms, and cut-off timings. Redemption proceeds are generally processed within the timelines prescribed by SEBI. Certain schemes, such as ELSS (Tax Saver Funds), are subject to a statutory lock-in period of 3 years."
   },
   {
     q: "Is ELSS better than FD for tax saving under 80C?",

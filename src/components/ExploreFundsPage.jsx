@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 const UPPERCASE_WORDS = new Set([
   'SBI','HDFC','ICICI','AXIS','DSP','UTI','LIC','IDBI','BOI','HSBC','JM',
   'PPFAS','ITI','NJ','PGIM','MOSL','ELSS','NFO','ETF','FoF','SIP','NAV',
-  'AMC','SEBI','MF','US','UK','ESG','IT','PSU','FMCG','CEF','G-SEC',
+  'AMC','SEBI','MF','US','UK','ESG','IT','PSU','FMCG','CEF','G-SEC','MNC',
 ]);
 
 const toTitleCase = (str) =>
@@ -24,12 +24,18 @@ const cleanName = (name) =>
     .replace(/[\s\-–]+payout\s+of\s+income\s+distribution\s+cum\s*capital\s+withdrawal\s+option/gi, ' (IDCW)')
     .replace(/[\s\-–]+income\s+distribution\s+cum\s+capital\s+withdrawal\s+option/gi, ' (IDCW)')
     .replace(/[\s\-–]+income\s+cum\s+distribution\s+withdrawal\s+option/gi, ' (IDCW)')
+    .replace(/[\s\-–]+(annual|monthly|quarterly|weekly|daily|fortnightly|bonus)[\s\-–]+idcw[\s\-–]+option/gi, (_, f) => ` (${f.charAt(0).toUpperCase() + f.slice(1).toLowerCase()} IDCW)`)
+    .replace(/[\s\-–]+(annual|monthly|quarterly|weekly|daily|fortnightly|bonus)[\s\-–]+idcw/gi, (_, f) => ` (${f.charAt(0).toUpperCase() + f.slice(1).toLowerCase()} IDCW)`)
+    .replace(/[\s\-–]+(annual|monthly|quarterly|weekly|daily|fortnightly|bonus)\s+idcw[\s\-–]+option/gi, (_, f) => ` (${f.charAt(0).toUpperCase() + f.slice(1).toLowerCase()} IDCW)`)
+    .replace(/[\s\-–]+(annual|monthly|quarterly|weekly|daily|fortnightly|bonus)\s+idcw/gi, (_, f) => ` (${f.charAt(0).toUpperCase() + f.slice(1).toLowerCase()} IDCW)`)
     .replace(/[\s\-–]+idcw\s+option/gi, ' (IDCW)')
     .replace(/[\s\-–]+idcw\s+payout/gi, ' (IDCW)')
-    .replace(/[\s\-–]+idcw/gi, ' (IDCW)')
+    .replace(/(?<!\([\w\s]*)[\s\-–]+idcw(?!\))/gi, ' (IDCW)')
     .replace(/\s*\(IDCW\)\s*\(IDCW\)/gi, ' (IDCW)')
     .replace(/[\s\-–]+cumulative\s+option/gi, ' (Growth)')
     .replace(/[\s\-–]+growth$/gi, ' (Growth)')
+    .replace(/(\w)\s*[\-–]\s*(\()/g, '$1 $2')
+    .replace(/\s+[\-–]\s+([A-Z])/g, ' $1')
     .replace(/\(idcw\)/gi, '(IDCW)')
     .trim();
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -406,6 +412,7 @@ const SummaryPopup = ({ fund, detail, onClose }) => {
 const ScreenerView = () => {
   const navigate = useNavigate();
   const [indexData, setIndexData] = useState(null);
+
   const [search, setSearch] = useState('');
   const [popupFund, setPopupFund] = useState(null);
   const [popupDetail, setPopupDetail] = useState(null);
@@ -1299,7 +1306,7 @@ const DetailView = ({ schemeCode }) => {
               {/* Desktop original */}
               <div className="hidden md:block">
                 <p className="text-[11px] uppercase tracking-widest text-navy-900/45 font-bold">{fund.meta?.fund_house}</p>
-                <h1 className="mt-1 text-2xl font-serif font-bold text-navy-900 leading-tight">{fund.meta?.scheme_name}</h1>
+                <h1 className="mt-1 text-2xl font-serif font-bold text-navy-900 leading-tight">{cleanName(fund.meta?.scheme_name)}</h1>
                 <p className="mt-1 text-sm text-navy-900/55">{fund.meta?.scheme_category}</p>
 
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-1 gap-2">
