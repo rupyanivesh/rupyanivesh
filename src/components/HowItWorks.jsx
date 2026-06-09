@@ -1,5 +1,5 @@
-﻿import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+﻿import React, { useState, useRef } from 'react';
+import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import {
   UserPlus,
   Target,
@@ -47,6 +47,50 @@ const steps = [
     icon: RefreshCcw
   }
 ];
+
+const TiltCard = ({ children, className }) => {
+  const ref = useRef(null);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  const rotateX = useSpring(useTransform(y, [-0.5, 0.5], [12, -12]), { stiffness: 200, damping: 20 });
+  const rotateY = useSpring(useTransform(x, [-0.5, 0.5], [-12, 12]), { stiffness: 200, damping: 20 });
+  const glareX = useTransform(x, [-0.5, 0.5], ['0%', '100%']);
+  const glareY = useTransform(y, [-0.5, 0.5], ['0%', '100%']);
+
+  const handleMouseMove = (e) => {
+    const rect = ref.current?.getBoundingClientRect();
+    if (!rect) return;
+    x.set((e.clientX - rect.left) / rect.width - 0.5);
+    y.set((e.clientY - rect.top) / rect.height - 0.5);
+  };
+
+  const handleMouseLeave = () => {
+    x.set(0);
+    y.set(0);
+  };
+
+  return (
+    <motion.div
+      ref={ref}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{ rotateX, rotateY, transformStyle: 'preserve-3d', perspective: 800 }}
+      className={className}
+    >
+      {children}
+      <motion.div
+        className="absolute inset-0 rounded-2xl pointer-events-none"
+        style={{
+          background: useTransform(
+            [glareX, glareY],
+            ([gx, gy]) => `radial-gradient(circle at ${gx} ${gy}, rgba(255,255,255,0.12) 0%, transparent 60%)`
+          ),
+        }}
+      />
+    </motion.div>
+  );
+};
 
 const HowItWorks = () => {
   const [hoveredStep, setHoveredStep] = useState(null);
@@ -120,21 +164,23 @@ const HowItWorks = () => {
                   whileInView={{ scale: 1, opacity: 1 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.2, type: "spring", damping: 12 }}
-                  className="w-14 h-14 rounded-full bg-navy-900 border-4 border-white shadow-xl flex items-center justify-center text-gold mb-6 relative z-10 transition-all duration-500 group-hover:scale-110 group-hover:border-gold/30 group-hover:shadow-[0_0_25px_rgba(197,160,89,0.4)]"
+                  whileHover={{ scale: 1.2, rotate: [0, -10, 10, 0], transition: { duration: 0.4 } }}
+                  className="w-14 h-14 rounded-full bg-navy-900 border-4 border-white shadow-xl flex items-center justify-center text-gold mb-6 relative z-10 group-hover:border-gold/30 group-hover:shadow-[0_0_25px_rgba(197,160,89,0.4)] cursor-pointer"
                 >
-                  <step.icon size={22} className="transition-transform duration-500 group-hover:scale-110" />
+                  <step.icon size={22} />
                 </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.2 + 0.3 }}
-                  className="p-6 bg-white/50 backdrop-blur-sm rounded-2xl border border-white transition-all duration-500 group-hover:bg-white group-hover:border-gold/40 group-hover:-translate-y-2 group-hover:shadow-2xl group-hover:shadow-gold/10 relative overflow-hidden"
-                >
-                  <h3 className="text-lg font-serif font-bold text-navy-900 mb-2 transition-colors duration-500 group-hover:text-gold">{step.title}</h3>
-                  <p className="text-[11px] text-gray-500 leading-relaxed font-medium">{step.desc}</p>
-                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-1 bg-gradient-to-r from-gold/50 via-gold to-gold/50 transition-all duration-500 group-hover:w-2/3 rounded-t-full" />
-                </motion.div>
+                <TiltCard className="p-6 bg-white/50 backdrop-blur-sm rounded-2xl border border-white transition-all duration-500 group-hover:bg-white group-hover:border-gold/40 group-hover:shadow-2xl group-hover:shadow-gold/10 relative overflow-hidden cursor-pointer">
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.2 + 0.3 }}
+                  >
+                    <h3 className="text-lg font-serif font-bold text-navy-900 mb-2 transition-colors duration-500 group-hover:text-gold">{step.title}</h3>
+                    <p className="text-[11px] text-gray-500 leading-relaxed font-medium">{step.desc}</p>
+                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-1 bg-gradient-to-r from-gold/50 via-gold to-gold/50 transition-all duration-500 group-hover:w-2/3 rounded-t-full" />
+                  </motion.div>
+                </TiltCard>
               </div>
             ))}
           </div>

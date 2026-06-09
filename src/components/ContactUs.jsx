@@ -8,10 +8,15 @@ const fadeUp = (delay = 0) => ({
   transition: { duration: 0.5, delay, ease: 'easeOut' },
 });
 
+const FORM_ACTION = 'https://docs.google.com/forms/d/e/1FAIpQLSeS-3Y-0UtaNtfPvNxsrS_vd7jdhxshVyisLQnPhb62aRGqfA/formResponse';
+
 const ContactUs = () => {
   const [num1, setNum1] = useState(3);
   const [num2, setNum2] = useState(4);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [formData, setFormData] = useState({ name: '', phone: '', email: '', subject: '', message: '', captcha: '' });
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     setNum1(Math.floor(Math.random() * 10) + 1);
@@ -19,6 +24,43 @@ const ContactUs = () => {
   }, []);
 
   const captchaSolution = (num1 + num2).toString();
+
+  const validate = () => {
+    const e = {};
+    if (!formData.name.trim()) e.name = 'Name is required.';
+    if (!/^[6-9]\d{9}$/.test(formData.phone.replace(/[\s\-+]/g, '').replace(/^91/, '')))
+      e.phone = 'Enter a valid 10-digit Indian mobile number.';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) e.email = 'Enter a valid email address.';
+    if (!formData.subject.trim()) e.subject = 'Subject is required.';
+    if (formData.captcha.trim() !== captchaSolution) e.captcha = `Answer is incorrect. Hint: ${num1} + ${num2}`;
+    return e;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const errs = validate();
+    if (Object.keys(errs).length) { setErrors(errs); return; }
+    setErrors({});
+    setSubmitting(true);
+    const body = new FormData();
+    body.append('entry.863484376', formData.name);
+    body.append('entry.1243930472', formData.phone);
+    body.append('entry.1547336943', formData.email);
+    body.append('entry.509010827', formData.subject);
+    body.append('entry.556290003', formData.message);
+    try {
+      await fetch(FORM_ACTION, { method: 'POST', body, mode: 'no-cors' });
+    } catch (_) { /* no-cors always throws — submission still goes through */ }
+    setSubmitting(false);
+    setSubmitted(true);
+  };
+
+  const field = (key) => ({
+    value: formData[key],
+    onChange: (e) => { setFormData(p => ({ ...p, [key]: e.target.value })); setErrors(p => ({ ...p, [key]: '' })); },
+  });
+
+  const errCls = 'text-red-400 text-[10px] mt-1';
 
   const inputCls = 'w-full bg-[#F8F6F2] border border-gray-200 rounded-xl px-4 py-3 text-navy-900 text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold transition-all placeholder-gray-400';
   const labelCls = 'block text-[10px] font-bold uppercase tracking-[0.2em] text-navy-900/50 mb-2';
@@ -48,7 +90,7 @@ const ContactUs = () => {
             {/* Contact details */}
             <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
               {[
-                { icon: Phone, label: 'Phone', value: '+91 95181-07944', href: 'tel:+919518107944' },
+                { icon: Phone, label: 'Phone', value: '+91 888-999-8057', href: 'tel:+918889998057' },
                 { icon: Mail, label: 'Email', value: 'info@rupyanivesh.in', href: 'mailto:info@rupyanivesh.in' },
                 { icon: MapPin, label: 'Address', value: '2nd Floor, Plot No. 02, Sector-13, Hisar-125005 (Haryana)', href: null },
                 { icon: Clock, label: 'Hours', value: 'Mon – Fri, 9:30 AM – 6:00 PM', href: null },
@@ -72,7 +114,7 @@ const ContactUs = () => {
             {/* WhatsApp */}
             <motion.a
               {...fadeUp(0.2)}
-              href="https://wa.me/919518107944?text=Hi%2C%20I%27d%20like%20to%20know%20more%20about%20mutual%20fund%20investments."
+              href="https://api.whatsapp.com/send/?phone=918889998057&text=Hi%2C+I%27d+like+to+know+more+about+mutual+fund+investments.&type=phone_number&app_absent=0"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-between bg-[#25D366] rounded-2xl px-6 py-4 group hover:bg-[#1fbc5b] transition-colors"
@@ -107,46 +149,53 @@ const ContactUs = () => {
                     <CheckCircle size={32} className="text-gold" />
                   </div>
                   <h3 className="text-navy-900 font-serif font-bold text-2xl mb-2">Message Sent!</h3>
-                  <p className="text-gray-400 text-sm">We'll get back to you within 1 business day.</p>
+                  <p className="text-gray-400 text-sm mb-8">We'll get back to you within 1 business day.</p>
+                  <button
+                    onClick={() => {
+                      setSubmitted(false);
+                      setFormData({ name: '', phone: '', email: '', subject: '', message: '', captcha: '' });
+                      setErrors({});
+                    }}
+                    className="text-sm font-semibold text-gold hover:text-navy-900 underline underline-offset-4 transition-colors"
+                  >
+                    Send another message
+                  </button>
                 </div>
               ) : (
                 <>
                   <div className="mb-8">
                     <h3 className="text-navy-900 font-serif font-bold text-2xl lg:text-3xl mb-1">Send a Message</h3>
-                    <p className="text-gray-400 text-sm">We'll respond within 1 business day.</p>
                   </div>
 
-                  <form
-                    action="https://docs.google.com/forms/d/e/YOUR_FORM_ID/formResponse"
-                    method="POST"
-                    target="_blank"
-                    className="space-y-5"
-                    onSubmit={() => setSubmitted(true)}
-                  >
+                  <form className="space-y-5" onSubmit={handleSubmit} noValidate>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                       <div>
                         <label className={labelCls}>Your Name <span className="text-red-400">*</span></label>
-                        <input type="text" name="entry.YOUR_NAME_ID" required placeholder="Ramesh Kumar" className={inputCls} />
+                        <input type="text" placeholder="Ramesh Kumar" className={`${inputCls} ${errors.name ? 'border-red-300' : ''}`} {...field('name')} />
+                        {errors.name && <p className={errCls}>{errors.name}</p>}
                       </div>
                       <div>
                         <label className={labelCls}>Phone Number <span className="text-red-400">*</span></label>
-                        <input type="tel" name="entry.YOUR_PHONE_ID" required placeholder="+91 98765 43210" className={inputCls} />
+                        <input type="tel" placeholder="98765 43210" className={`${inputCls} ${errors.phone ? 'border-red-300' : ''}`} {...field('phone')} />
+                        {errors.phone && <p className={errCls}>{errors.phone}</p>}
                       </div>
                     </div>
 
                     <div>
                       <label className={labelCls}>Email Address <span className="text-red-400">*</span></label>
-                      <input type="email" name="entry.YOUR_EMAIL_ID" required placeholder="you@example.com" className={inputCls} />
+                      <input type="email" placeholder="you@example.com" className={`${inputCls} ${errors.email ? 'border-red-300' : ''}`} {...field('email')} />
+                      {errors.email && <p className={errCls}>{errors.email}</p>}
                     </div>
 
                     <div>
                       <label className={labelCls}>Subject <span className="text-red-400">*</span></label>
-                      <input type="text" name="entry.YOUR_SUBJECT_ID" required placeholder="e.g. SIP Investment Query" className={inputCls} />
+                      <input type="text" placeholder="e.g. SIP Investment Query" className={`${inputCls} ${errors.subject ? 'border-red-300' : ''}`} {...field('subject')} />
+                      {errors.subject && <p className={errCls}>{errors.subject}</p>}
                     </div>
 
                     <div>
                       <label className={labelCls}>Message</label>
-                      <textarea name="entry.YOUR_MESSAGE_ID" rows="4" placeholder="Tell us how we can help..." className={`${inputCls} resize-none`} />
+                      <textarea rows="4" placeholder="Tell us how we can help..." className={`${inputCls} resize-none`} {...field('message')} />
                     </div>
 
                     <div>
@@ -155,24 +204,23 @@ const ContactUs = () => {
                       </label>
                       <input
                         type="text"
-                        name="entry.YOUR_CAPTCHA_ID"
-                        required
-                        pattern={`^${captchaSolution}$`}
-                        title={`Please enter ${captchaSolution}`}
                         placeholder="Your answer"
-                        className={inputCls}
+                        className={`${inputCls} ${errors.captcha ? 'border-red-300' : ''}`}
+                        {...field('captcha')}
                       />
+                      {errors.captcha && <p className={errCls}>{errors.captcha}</p>}
                     </div>
 
                     <button
                       type="submit"
-                      className="w-full bg-navy-900 hover:bg-navy-800 text-white font-bold py-4 rounded-xl transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 mt-2"
+                      disabled={submitting}
+                      className="w-full bg-navy-900 hover:bg-navy-800 disabled:opacity-60 text-white font-bold py-4 rounded-xl transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 mt-2"
                     >
-                      Send Message <ArrowRight size={16} />
+                      {submitting ? 'Sending…' : <><span>Send Message</span><ArrowRight size={16} /></>}
                     </button>
 
                     <p className="text-[10px] text-gray-400 leading-relaxed text-center pt-1">
-                      By submitting, you consent to RupyaNivesh (Shubh Lakshmi Wealth) collecting your contact information for communication purposes in accordance with SEBI and AMFI guidelines. Your data is kept strictly confidential.
+                      By submitting your details, you consent to the collection and use of your contact information for communication purposes, in accordance with applicable SEBI and AMFI guidelines. Your information will be kept confidential.
                     </p>
                   </form>
                 </>

@@ -50,12 +50,13 @@ const Home = () => (
   </>
 );
 
+const scrollPositions = {};
+
 const ScrollToTop = () => {
   const { pathname, hash } = useLocation();
   const navType = useNavigationType();
 
   useEffect(() => {
-    // 1. If it's a PUSH navigation (new click) and we have a hash, scroll to that element
     if (hash) {
       setTimeout(() => {
         const id = hash.replace('#', '');
@@ -72,14 +73,25 @@ const ScrollToTop = () => {
           }, 2600);
         }
       }, 50);
-    } 
-    // 2. If it's a new page navigation (PUSH) and no hash, scroll to top
-    else if (navType === 'PUSH' && !hash) {
+    } else if (navType === 'POP') {
+      const saved = scrollPositions[pathname] ?? 0;
+      if (saved === 0) return;
+      // Home page has many sections — wait for full render before restoring
+      const delay = pathname === '/' ? 120 : 0;
+      setTimeout(() => window.scrollTo({ top: saved, behavior: 'instant' }), delay);
+    } else if (navType === 'PUSH') {
+      // Save current scroll before navigating away, then go to top
+      scrollPositions[pathname] = window.scrollY;
       window.scrollTo(0, 0);
     }
-    // 3. For any POP navigation (Back/Forward), we do NOTHING and let the browser handle 
-    // native scroll restoration to the exact last known position.
   }, [pathname, hash, navType]);
+
+  // Save scroll position on every scroll so it's always up to date
+  useEffect(() => {
+    const save = () => { scrollPositions[pathname] = window.scrollY; };
+    window.addEventListener('scroll', save, { passive: true });
+    return () => window.removeEventListener('scroll', save);
+  }, [pathname]);
 
   return null;
 };

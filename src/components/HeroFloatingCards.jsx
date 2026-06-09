@@ -1,5 +1,5 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useRef } from 'react';
+import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 
 /* ── constants ── */
 const CW = 268;   // card width  — both columns identical
@@ -133,6 +133,47 @@ const Card04 = ({ mobile }) => (
   </div>
 );
 
+const TiltCard = ({ children, style, className }) => {
+  const ref = useRef(null);
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+  const rotateX = useSpring(useTransform(my, [-0.5, 0.5], [6, -6]), { stiffness: 250, damping: 22 });
+  const rotateY = useSpring(useTransform(mx, [-0.5, 0.5], [-6, 6]), { stiffness: 250, damping: 22 });
+  const scale   = useSpring(1, { stiffness: 300, damping: 22 });
+  const glareX  = useTransform(mx, [-0.5, 0.5], ['0%', '100%']);
+  const glareY  = useTransform(my, [-0.5, 0.5], ['0%', '100%']);
+
+  const onMove = (e) => {
+    const r = ref.current?.getBoundingClientRect();
+    if (!r) return;
+    mx.set((e.clientX - r.left) / r.width - 0.5);
+    my.set((e.clientY - r.top)  / r.height - 0.5);
+  };
+  const onLeave = () => { mx.set(0); my.set(0); scale.set(1); };
+  const onEnter = () => scale.set(1.04);
+
+  return (
+    <motion.div
+      ref={ref}
+      onMouseMove={onMove}
+      onMouseEnter={onEnter}
+      onMouseLeave={onLeave}
+      style={{ ...style, rotateX, rotateY, scale, transformStyle: 'preserve-3d', perspective: 900, backfaceVisibility: 'hidden', WebkitFontSmoothing: 'antialiased' }}
+      className={className}
+    >
+      {children}
+      <motion.div
+        style={{
+          position: 'absolute', inset: 0, borderRadius: 24, pointerEvents: 'none',
+          background: useTransform([glareX, glareY], ([gx, gy]) =>
+            `radial-gradient(circle at ${gx} ${gy}, rgba(255,255,255,0.13) 0%, transparent 65%)`
+          ),
+        }}
+      />
+    </motion.div>
+  );
+};
+
 /* ════════════════════════════════════ Main ══════════════════════ */
 const HeroFloatingCards = () => (
   <>
@@ -144,7 +185,7 @@ const HeroFloatingCards = () => (
 
     {/* Desktop: precise 2-column positioned layout */}
     <div
-      className="hidden lg:block relative select-none pointer-events-none"
+      className="hidden lg:block relative select-none"
       style={{ width: CW * 2 + GAP, height: TOTAL_H }}
     >
       {[
@@ -153,10 +194,8 @@ const HeroFloatingCards = () => (
         { Card: Card03, pos: POS.c03, amp:  9, dur: 9.0, delay: 0.6 },
         { Card: Card04, pos: POS.c04, amp: 11, dur: 7.8, delay: 1.7 },
       ].map(({ Card, pos, amp, dur, delay }, i) => (
-        <motion.div
+        <TiltCard
           key={i}
-          animate={{ y: [0, -amp, 0] }}
-          transition={{ duration: dur, repeat: Infinity, ease: 'easeInOut', delay }}
           style={{
             position: 'absolute',
             top:    pos.top,
@@ -165,8 +204,13 @@ const HeroFloatingCards = () => (
             zIndex: pos.z,
           }}
         >
-          <Card />
-        </motion.div>
+          <motion.div
+            animate={{ y: [0, -amp, 0] }}
+            transition={{ duration: dur, repeat: Infinity, ease: 'easeInOut', delay }}
+          >
+            <Card />
+          </motion.div>
+        </TiltCard>
       ))}
     </div>
   </>
