@@ -23,7 +23,6 @@ const Header = () => {
     const order = [
       'Core Investment Calculators',
       'Goal Based Calculators',
-      'Fund-Based Return Calculators',
     ];
     const map = {};
     tools.forEach((t) => {
@@ -85,8 +84,8 @@ const Header = () => {
               </button>
 
               <div className="absolute top-12 left-1/2 -translate-x-1/2 pt-4 opacity-0 invisible group-hover/dropdown:opacity-100 group-hover/dropdown:visible transition-all duration-300 delay-75">
-                <div className="bg-white rounded-3xl shadow-[0_40px_100px_rgba(0,0,0,0.1)] border border-gray-100 p-4 min-w-[980px]">
-                  <div className="grid grid-cols-3 gap-4">
+                <div className="bg-white rounded-3xl shadow-[0_40px_100px_rgba(0,0,0,0.1)] border border-gray-100 p-4 min-w-[620px]">
+                  <div className="grid grid-cols-2 gap-4">
                     {groupedTools.map((group) => (
                       <div key={group.category} className="min-w-0">
                         <p className="text-xs font-black uppercase tracking-[0.16em] text-navy-900/55 px-2 mb-2">

@@ -105,6 +105,49 @@ const getRiskBand = (cagr3y) => {
   return { label: 'High', color: 'bg-rose-500' };
 };
 
+const riskLevels = ['Low', 'Low to Moderate', 'Moderate', 'Moderately High', 'High', 'Very High'];
+const riskColors = ['#16a34a', '#65a30d', '#ca8a04', '#ea580c', '#dc2626', '#991b1b'];
+
+const inferRisk = (fund) => {
+  const cat = String(fund.scheme_category || '').toLowerCase();
+  const c3 = Number(fund.cagr_3y);
+  if (cat.includes('elss') || cat.includes('sectoral') || cat.includes('small cap') || cat.includes('thematic')) return 'Very High';
+  if (cat.startsWith('equity scheme')) return 'High';
+  if (cat.includes('aggressive hybrid') || cat.includes('equity savings')) return 'High';
+  if (cat.startsWith('hybrid scheme')) return 'Moderately High';
+  if (cat.includes('overnight') || cat.includes('liquid') || cat.includes('money market')) return 'Low';
+  if (cat.startsWith('debt scheme')) return Number.isFinite(c3) && c3 >= 8 ? 'Moderate' : 'Low to Moderate';
+  if (Number.isFinite(c3) && c3 >= 15) return 'High';
+  if (Number.isFinite(c3) && c3 >= 6) return 'Moderate';
+  return 'Low to Moderate';
+};
+
+const MiniRiskometer = ({ risk }) => {
+  const activeIndex = Math.max(0, riskLevels.indexOf(risk));
+  const cx = 50, cy = 52, outerR = 38, innerR = 24;
+  const toRad = (deg) => (deg * Math.PI) / 180;
+  const pt = (r, deg) => ({
+    x: +(cx + r * Math.cos(toRad(deg))).toFixed(3),
+    y: +(cy + r * Math.sin(toRad(deg))).toFixed(3),
+  });
+  const arcSegment = (s, e) => {
+    const p1 = pt(outerR, s), p2 = pt(outerR, e), p3 = pt(innerR, e), p4 = pt(innerR, s);
+    return `M ${p1.x} ${p1.y} A ${outerR} ${outerR} 0 0 1 ${p2.x} ${p2.y} L ${p3.x} ${p3.y} A ${innerR} ${innerR} 0 0 0 ${p4.x} ${p4.y} Z`;
+  };
+  const needleDeg = 180 + activeIndex * 30 + 15;
+  const needleTip = pt(outerR - 6, needleDeg);
+  return (
+    <svg viewBox="0 0 100 58" className="w-10 h-6" aria-label={`Risk: ${risk}`}>
+      {riskLevels.map((_, i) => (
+        <path key={i} d={arcSegment(180 + i * 30, 180 + (i + 1) * 30)} fill={riskColors[i]} opacity={i === activeIndex ? 1 : 0.18} />
+      ))}
+      <line x1={cx} y1={cy} x2={needleTip.x} y2={needleTip.y} stroke="#1e293b" strokeWidth="2.5" strokeLinecap="round" />
+      <circle cx={cx} cy={cy} r="3.5" fill="#1e293b" />
+      <circle cx={cx} cy={cy} r="1.8" fill="white" />
+    </svg>
+  );
+};
+
 const computeInceptionCagr = (navHistory) => {
   if (!Array.isArray(navHistory) || navHistory.length < 2) return null;
   const rows = navHistory
@@ -429,8 +472,8 @@ const ScreenerView = () => {
   const [isListExpanded, setIsListExpanded] = useState(false);
   const [cagrMin, setCagrMin] = useState(CAGR_RANGE.min);
   const [cagrMax, setCagrMax] = useState(CAGR_RANGE.max);
-  const [sortField, setSortField] = useState('cagr3');
-  const [sortOrder, setSortOrder] = useState('desc');
+  const [sortField, setSortField] = useState('name');
+  const [sortOrder, setSortOrder] = useState('asc');
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [isMobileView, setIsMobileView] = useState(false);
 
@@ -459,6 +502,18 @@ const ScreenerView = () => {
   }, []);
 
   const funds = indexData?.funds || [];
+
+  const latestNavDate = useMemo(() => {
+    const dates = funds.map((f) => f.latest_date).filter(Boolean);
+    if (!dates.length) return null;
+    const sorted = dates.slice().sort((a, b) => {
+      const [da, ma, ya] = a.split('-').map(Number);
+      const [db, mb, yb] = b.split('-').map(Number);
+      return new Date(yb, mb - 1, db) - new Date(ya, ma - 1, da);
+    });
+    const [d, m, y] = sorted[0].split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  }, [funds]);
 
   const amcOptions = useMemo(
     () => [...new Set(funds.map((f) => String(f.fund_house || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b)),
@@ -503,8 +558,11 @@ const ScreenerView = () => {
 
   const filteredFunds = useMemo(() => {
     const terms = search.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    const EXCLUDED_CODES = new Set([120705, 120550]);
     let list = funds.filter((f) => {
-      const haystack = `${f.scheme_name} ${f.fund_house} ${f.scheme_category} ${f.scheme_code}`.toLowerCase();
+      if (EXCLUDED_CODES.has(Number(f.scheme_code))) return false;
+      const name = String(f.scheme_name || '');
+      const haystack = `${name} ${f.fund_house} ${f.scheme_category} ${f.scheme_code}`.toLowerCase();
       const matchText = terms.length === 0 || terms.every((t) => haystack.includes(t));
 
       const matchAmc = !selectedAmcs.length || selectedAmcs.includes(String(f.fund_house || ''));
@@ -515,6 +573,14 @@ const ScreenerView = () => {
       return matchText && matchAmc && matchCategory && matchCagr;
     });
     list.sort((a, b) => {
+      if (sortField === 'name') {
+        const cmp = String(a.scheme_name || '').localeCompare(String(b.scheme_name || ''));
+        return sortOrder === 'asc' ? cmp : -cmp;
+      }
+      if (sortField === 'category') {
+        const cmp = String(a.scheme_category || '').localeCompare(String(b.scheme_category || ''));
+        return sortOrder === 'asc' ? cmp : -cmp;
+      }
       const aVal = sortField === 'cagr1' ? Number(a.cagr_1y || -9999) : Number(a.cagr_3y || -9999);
       const bVal = sortField === 'cagr1' ? Number(b.cagr_1y || -9999) : Number(b.cagr_3y || -9999);
       return sortOrder === 'desc' ? bVal - aVal : aVal - bVal;
@@ -568,7 +634,7 @@ const ScreenerView = () => {
       return;
     }
     setSortField(field);
-    setSortOrder('desc');
+    setSortOrder(field === 'name' || field === 'category' ? 'asc' : 'desc');
   };
 
   const activeCagrBand = useMemo(() => {
@@ -844,25 +910,46 @@ const ScreenerView = () => {
             </div>
 
             <div className="hidden lg:block overflow-x-auto">
-              <table className="w-full min-w-[860px] table-fixed text-sm">
-                <thead className="bg-[#f8f4ea] sticky top-0 z-10 border-y border-[#ece4d4]">
-                  <tr className="text-left text-[12px] uppercase tracking-[0.08em] text-navy-900/70">
-                    <th className="px-3 py-3.5 w-[4%] align-middle">#</th>
-                    <th className="px-3 py-3.5 w-[34%] align-middle">Name</th>
-                    <th className="px-3 py-3.5 w-[21%] align-middle">Category</th>
-                    <th className="px-3 py-3.5 w-[8%] align-middle">Plan</th>
-                    <th className="px-3 py-3.5 w-[11%] align-middle">Latest NAV</th>
-                    <th className="px-3 py-3.5 w-[8%] align-middle">
-                      <button onClick={() => toggleSort('cagr1')} className="inline-flex w-full items-center justify-start gap-1 leading-tight font-semibold text-navy-900/75 hover:text-navy-900">
-                        1YR Returns <span>{sortField === 'cagr1' ? (sortOrder === 'desc' ? '▼' : '▲') : '↕'}</span>
+              <table className="w-full min-w-[1000px] table-fixed text-sm">
+                <thead className="sticky top-0 z-10">
+                  <tr className="bg-gradient-to-r from-navy-900 via-navy-800 to-navy-900 text-white">
+                    <th className="px-4 py-4 w-[3%] text-left rounded-tl-2xl">
+                      <span className="text-[11px] font-black text-white/40 uppercase tracking-widest">#</span>
+                    </th>
+                    <th className="px-4 py-4 w-[30%] text-left">
+                      <button onClick={() => toggleSort('name')} className="inline-flex items-center gap-2 group">
+                        <span className="text-[12px] font-black uppercase tracking-widest text-white group-hover:text-gold transition-colors">Fund Name</span>
+                        <span className="text-[10px] text-white/30 group-hover:text-gold/60 transition-colors">{sortField === 'name' ? (sortOrder === 'asc' ? '▲' : '▼') : '⇅'}</span>
                       </button>
                     </th>
-                    <th className="px-3 py-3.5 w-[8%] align-middle">
-                      <button onClick={() => toggleSort('cagr3')} className="inline-flex w-full items-center justify-start gap-1 leading-tight font-semibold text-navy-900/75 hover:text-navy-900">
-                        3YR CAGR <span>{sortField === 'cagr3' ? (sortOrder === 'desc' ? '▼' : '▲') : '↕'}</span>
+                    <th className="px-4 py-4 w-[22%] text-left">
+                      <button onClick={() => toggleSort('category')} className="inline-flex items-center gap-2 group">
+                        <span className="text-[12px] font-black uppercase tracking-widest text-white/50 group-hover:text-gold transition-colors">Category</span>
+                        <span className="text-[10px] text-white/30 group-hover:text-gold/60 transition-colors">{sortField === 'category' ? (sortOrder === 'asc' ? '▲' : '▼') : '⇅'}</span>
                       </button>
                     </th>
-                    <th className="px-3 py-3.5 w-[7%] align-middle">Risk</th>
+                    <th className="px-4 py-4 w-[6%] text-left">
+                      <span className="text-[12px] font-black uppercase tracking-widest text-white/50">Plan</span>
+                    </th>
+                    <th className="px-4 py-4 w-[9%] text-center">
+                      <span className="text-[12px] font-black uppercase tracking-widest text-white block">NAV</span>
+                      <span className="text-[11px] font-semibold normal-case tracking-wide text-gold/70 block">Till {latestNavDate || '—'}</span>
+                    </th>
+                    <th className="px-4 py-4 w-[8%] text-center">
+                      <button onClick={() => toggleSort('cagr1')} className="inline-flex items-center justify-center gap-1.5 w-full group">
+                        <span className="text-[12px] font-black uppercase tracking-widest text-white group-hover:text-gold transition-colors">1Y Return</span>
+                        <span className="text-[10px] text-white/30 group-hover:text-gold/60 transition-colors">{sortField === 'cagr1' ? (sortOrder === 'desc' ? '▼' : '▲') : '⇅'}</span>
+                      </button>
+                    </th>
+                    <th className="px-4 py-4 w-[8%] text-center">
+                      <button onClick={() => toggleSort('cagr3')} className="inline-flex items-center justify-center gap-1.5 w-full group">
+                        <span className="text-[12px] font-black uppercase tracking-widest text-white group-hover:text-gold transition-colors">3Y CAGR</span>
+                        <span className="text-[10px] text-white/30 group-hover:text-gold/60 transition-colors">{sortField === 'cagr3' ? (sortOrder === 'desc' ? '▼' : '▲') : '⇅'}</span>
+                      </button>
+                    </th>
+                    <th className="px-4 py-4 w-[8%] text-center rounded-tr-2xl">
+                      <span className="text-[12px] font-black uppercase tracking-widest text-white/50">Risk</span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -873,22 +960,27 @@ const ScreenerView = () => {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.25, delay: Math.min(idx * 0.03, 0.6) }}
                       className="border-t border-[#efe9dc] hover:bg-[#fffaf0] transition-colors duration-150">
-                      <td className="px-3 py-3 text-navy-900/50 align-top">{idx + 1}</td>
-                      <td className="px-3 py-3 align-top">
-                        <button onClick={() => openPopup(fund)} className="text-left font-semibold text-[0.95rem] md:text-[1.03rem] text-navy-900 hover:text-gold leading-snug transition-colors">
+                      <td className="px-3 py-4 text-[14px] text-navy-900/40 font-medium align-middle">{idx + 1}</td>
+                      <td className="px-3 py-4 align-middle">
+                        <button onClick={() => openPopup(fund)} className="text-left font-semibold text-[15px] text-navy-900 hover:text-gold leading-snug transition-colors">
                           {cleanName(fund.scheme_name)}
                         </button>
-                        <p className="text-xs text-navy-900/50 mt-0.5">{fund.fund_house}</p>
+                        <p className="text-[12px] text-navy-900/45 mt-0.5">{fund.fund_house}</p>
                       </td>
-                      <td className="px-3 py-3 text-navy-900/70 align-top leading-snug">{fund.scheme_category || 'NA'}</td>
-                      <td className="px-3 py-3 text-navy-900/70 align-top">Regular</td>
-                      <td className="px-3 py-3 font-semibold align-top">₹{INR.format(Number(fund.latest_nav || 0))}</td>
-                      <td className={`px-3 py-3 font-semibold align-top ${pctClass(fund.cagr_1y)}`}>{formatPct(fund.cagr_1y)}</td>
-                      <td className={`px-3 py-3 font-semibold align-top ${pctClass(fund.cagr_3y)}`}>{formatPct(fund.cagr_3y)}</td>
-                      <td className="px-3 py-3 align-top">
-                        <div className="inline-flex items-center gap-1.5">
-                          <span className={`w-2.5 h-2.5 rounded-full ${getRiskBand(fund.cagr_3y).color}`} />
-                          <span className="text-xs font-semibold text-navy-900/75">{getRiskBand(fund.cagr_3y).label}</span>
+                      <td className="px-3 py-4 text-[13px] text-navy-900/60 align-middle leading-snug">{fund.scheme_category || 'NA'}</td>
+                      <td className="px-3 py-4 text-[13px] align-middle">
+                        {/idcw/i.test(fund.scheme_name)
+                          ? <span className="px-2 py-0.5 rounded-full bg-purple-50 text-purple-600 font-semibold text-[12px]">IDCW</span>
+                          : <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 font-semibold text-[12px]">Growth</span>
+                        }
+                      </td>
+                      <td className="px-3 py-4 text-[14px] font-semibold text-navy-900 align-middle text-center">₹{INR.format(Number(fund.latest_nav || 0))}</td>
+                      <td className={`px-3 py-4 text-[14px] font-semibold align-middle text-center ${pctClass(fund.cagr_1y)}`}>{formatPct(fund.cagr_1y)}</td>
+                      <td className={`px-3 py-4 text-[14px] font-semibold align-middle text-center ${pctClass(fund.cagr_3y)}`}>{formatPct(fund.cagr_3y)}</td>
+                      <td className="px-3 py-4 align-middle">
+                        <div className="inline-flex items-center justify-center gap-1.5 w-full">
+                          <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${getRiskBand(fund.cagr_3y).color}`} />
+                          <span className="text-[13px] font-semibold text-navy-900/70">{getRiskBand(fund.cagr_3y).label}</span>
                         </div>
                       </td>
                     </motion.tr>

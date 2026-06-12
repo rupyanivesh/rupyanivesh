@@ -23,12 +23,6 @@ import {
   House,
   Car,
   Plane,
-  LineChart,
-  CalendarClock,
-  Banknote,
-  History,
-  GitCompareArrows,
-  Trophy
 } from 'lucide-react';
 import {
   Chart as ChartJS,
@@ -419,9 +413,15 @@ const FAQSection = ({ faqs }) => {
   );
 };
 
+const formatWithCommas = (v) => {
+  if (!Number.isFinite(Number(v))) return String(v);
+  return Number(v).toLocaleString('en-IN');
+};
+
 const CalculatorInput = ({ label, value, min, max, step, unit, onChange, isCurrency = false }) => {
   const [draft, setDraft] = useState(String(value ?? ''));
   const [isEditing, setIsEditing] = useState(false);
+  const isNumeric = isCurrency || (!unit || unit === '%');
 
   const formatRangeValue = (v) => {
     if (!Number.isFinite(v)) return '';
@@ -434,7 +434,7 @@ const CalculatorInput = ({ label, value, min, max, step, unit, onChange, isCurre
   }, [value, isEditing]);
 
   const commitDraft = () => {
-    const raw = String(draft ?? '').trim();
+    const raw = String(draft ?? '').replace(/,/g, '').trim();
     if (!raw) {
       setDraft(String(value ?? ''));
       return;
@@ -451,12 +451,35 @@ const CalculatorInput = ({ label, value, min, max, step, unit, onChange, isCurre
   };
 
   const handleChange = (e) => {
-    const raw = e.target.value;
-    setDraft(raw);
-    if (raw === '' || raw === '-' || raw === '.') return;
+    const raw = e.target.value.replace(/,/g, '');
+    if (raw === '' || raw === '-' || raw === '.') {
+      setDraft(raw);
+      return;
+    }
     const val = Number(raw);
     if (!Number.isFinite(val)) return;
-    onChange(val);
+    // Only clamp to max while typing (so overshooting snaps immediately)
+    // Min clamping happens on blur via commitDraft
+    const clamped = Number.isFinite(max) ? Math.min(max, val) : val;
+    setDraft(String(clamped));
+    onChange(Math.max(Number.isFinite(min) ? min : -Infinity, clamped));
+  };
+
+  const displayValue = isEditing || !isCurrency ? draft : formatWithCommas(value);
+
+  // Square-root scale for currency sliders: smooth and uniform feel across all ranges
+  const useSqrt = isCurrency && Number.isFinite(min) && Number.isFinite(max) && min >= 0;
+  const SQRT_STEPS = 1000;
+  const toSqrt = (v) => {
+    const sqMin = Math.sqrt(min);
+    const sqMax = Math.sqrt(max);
+    return Math.round(((Math.sqrt(Math.max(min, Math.min(max, v))) - sqMin) / (sqMax - sqMin)) * SQRT_STEPS);
+  };
+  const fromSqrt = (s) => {
+    const sqMin = Math.sqrt(min);
+    const sqMax = Math.sqrt(max);
+    const raw = Math.pow(sqMin + (s / SQRT_STEPS) * (sqMax - sqMin), 2);
+    return Math.min(max, Math.max(min, Math.round(raw / step) * step));
   };
 
   return (
@@ -465,13 +488,25 @@ const CalculatorInput = ({ label, value, min, max, step, unit, onChange, isCurre
       <div className="relative">
         {unit === INR_SYMBOL && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-navy-900/40 font-sans font-bold text-sm">{INR_SYMBOL}</span>}
         <input
-          type="number"
-          value={draft}
+          type="text"
+          inputMode={isCurrency ? 'numeric' : 'decimal'}
+          value={displayValue}
           onChange={handleChange}
           onFocus={() => setIsEditing(true)}
           onBlur={() => {
             setIsEditing(false);
             commitDraft();
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              commitDraft();
+              setIsEditing(false);
+              const inputs = Array.from(document.querySelectorAll('input[type="text"], input[type="number"]'));
+              const idx = inputs.indexOf(e.currentTarget);
+              if (idx >= 0 && idx < inputs.length - 1) inputs[idx + 1].focus();
+              else e.currentTarget.blur();
+            }
           }}
           className={`w-full bg-white border border-gray-50 rounded-xl py-2 ${unit === INR_SYMBOL ? 'pl-8' : 'px-4'} pr-4 text-navy-900 font-sans font-black text-base lg:text-lg outline-none focus:border-gold/30 transition-all shadow-sm`}
         />
@@ -479,8 +514,12 @@ const CalculatorInput = ({ label, value, min, max, step, unit, onChange, isCurre
       <div className="relative h-1.5 flex items-center pt-1">
         <div className="absolute w-full h-1 bg-gray-100 rounded-full" />
         <input
-          type="range" min={min} max={max} step={step} value={value}
-          onChange={(e) => onChange(Number(e.target.value))}
+          type="range"
+          min={useSqrt ? 0 : min}
+          max={useSqrt ? SQRT_STEPS : max}
+          step={useSqrt ? 1 : step}
+          value={useSqrt ? toSqrt(value) : value}
+          onChange={(e) => onChange(useSqrt ? fromSqrt(Number(e.target.value)) : Number(e.target.value))}
           className="absolute w-full h-1 bg-transparent appearance-none cursor-pointer accent-gold z-10"
         />
       </div>
@@ -495,7 +534,7 @@ const CalculatorInput = ({ label, value, min, max, step, unit, onChange, isCurre
 const SIPCalculator = () => {
   const [frequency, setFrequency] = useState('Monthly'); // 'Monthly', 'Quarterly', 'Yearly'
   const [amount, setAmount] = useState(10000);
-  const [rate, setRate] = useState(12.5);
+  const [rate, setRate] = useState(12);
   const [years, setYears] = useState(15);
   const [result, setResult] = useState({ invested: 0, gains: 0, total: 0 });
   const [viewMode, setViewMode] = useState('chart'); // 'chart' | 'table'
@@ -538,8 +577,7 @@ const SIPCalculator = () => {
       <div className="lg:w-[45%] p-6 lg:p-8 space-y-6 border-r border-gray-50 flex flex-col">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 className="text-xl font-serif font-bold text-navy-900">SIP Calculator</h3>
-            <p className="text-gray-400 text-[10px] font-medium">Build wealth systematically.</p>
+            <h3 className="text-xl font-sans font-black text-navy-900">SIP Calculator</h3>
           </div>
 
           {/* Frequency Toggle */}
@@ -564,7 +602,7 @@ const SIPCalculator = () => {
           />
           <CalculatorInput
             label="Expected Returns (%)"
-            value={rate} min={1} max={30} step={0.5} unit="%"
+            value={rate} min={2} max={13} step={0.5} unit="%"
             onChange={setRate}
           />
           <CalculatorInput
@@ -727,17 +765,16 @@ const LumpsumCalculator = () => {
       <div className="lg:w-[45%] p-6 lg:p-8 space-y-6 border-r border-gray-50 flex flex-col">
         <div>
           <h3 className="text-xl font-sans font-black text-navy-900">Lumpsum Calculator</h3>
-          <p className="text-gray-400 text-[10px] font-medium">Project returns on one-time investments.</p>
         </div>
         <div className="space-y-4 flex-1">
           <CalculatorInput
             label="Total Investment"
-            value={amount} min={1000} max={10000000} step={1000} unit={INR_SYMBOL} isCurrency
+            value={amount} min={5000} max={10000000} step={1000} unit={INR_SYMBOL} isCurrency
             onChange={setAmount}
           />
           <CalculatorInput
             label="Expected Returns (%)"
-            value={rate} min={1} max={30} step={0.5} unit="%"
+            value={rate} min={2} max={13} step={0.5} unit="%"
             onChange={setRate}
           />
           <CalculatorInput
@@ -909,7 +946,6 @@ const RetirementCalculator = () => {
       <div className="lg:w-[45%] p-6 lg:p-8 space-y-6 border-r border-gray-50 flex flex-col">
         <div>
           <h3 className="text-xl font-sans font-black text-navy-900">Retirement Goal Calculator</h3>
-          <p className="text-gray-400 text-[10px] font-medium">Plan your financial freedom journey.</p>
         </div>
         <div className="space-y-4 flex-1">
           <CalculatorInput
@@ -931,7 +967,7 @@ const RetirementCalculator = () => {
           </div>
           <CalculatorInput
             label="Expected Returns (%)"
-            value={rate} min={1} max={20} step={0.5} unit="%"
+            value={rate} min={2} max={13} step={0.5} unit="%"
             onChange={setRate}
           />
         </div>
@@ -1089,7 +1125,6 @@ const InflationTracker = () => {
       <div className="lg:w-[45%] p-6 lg:p-8 space-y-6 border-r border-gray-50 flex flex-col">
         <div>
           <h3 className="text-xl font-sans font-black text-navy-900">Inflation Tracker</h3>
-          <p className="text-gray-400 text-[10px] font-medium">Watch how money loses power over time.</p>
         </div>
         <div className="space-y-4 flex-1">
           <CalculatorInput
@@ -1267,7 +1302,6 @@ const EducationGoal = () => {
       <div className="lg:w-[45%] p-6 lg:p-8 space-y-6 border-r border-gray-50 flex flex-col">
         <div>
           <h3 className="text-xl font-sans font-black text-navy-900">Education Goal Calculator</h3>
-          <p className="text-gray-400 text-[10px] font-medium">Fund your children's global ambitions.</p>
         </div>
         <div className="space-y-4 flex-1">
           <CalculatorInput
@@ -1282,7 +1316,7 @@ const EducationGoal = () => {
           />
           <CalculatorInput
             label="Expected Returns (%)"
-            value={rate} min={1} max={18} step={0.5} unit="%"
+            value={rate} min={2} max={13} step={0.5} unit="%"
             onChange={setRate}
           />
         </div>
@@ -1413,272 +1447,10 @@ const parseDate = (value) => {
   return new Date(y, m - 1, d);
 };
 
-const useFundsIndexData = () => {
-  const [funds, setFunds] = useState([]);
-  useEffect(() => {
-    let cancelled = false;
-    const run = async () => {
-      try {
-        const res = await fetch(`${import.meta.env.BASE_URL}mf-data/funds-index.json`);
-        const data = await res.json();
-        if (!cancelled) setFunds(Array.isArray(data?.funds) ? data.funds : []);
-      } catch {
-        if (!cancelled) setFunds([]);
-      }
-    };
-    run();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-  return funds;
-};
-
-const useEligibleFundsForCalculators = () => {
-  const funds = useFundsIndexData();
-  const [eligibleFunds, setEligibleFunds] = useState([]);
-  const [isLoadingEligible, setIsLoadingEligible] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    const run = async () => {
-      try {
-        setIsLoadingEligible(true);
-        const base = funds.filter((f) => Number(f?.cagr_5y) > 10);
-        const checks = await Promise.all(
-          base.map(async (f) => {
-            try {
-              const res = await fetch(`${import.meta.env.BASE_URL}mf-data/funds/${f.scheme_code}.json`);
-              const data = await res.json();
-              const firstDate = data?.nav_history?.[0]?.date;
-              const lastDate = data?.metrics?.latest_date || f.latest_date;
-              const start = parseDate(firstDate);
-              const end = parseDate(lastDate);
-              if (!start || !end) return null;
-              const ageYears = (end - start) / (1000 * 60 * 60 * 24 * 365.25);
-              if (ageYears < 10) return null;
-              return {
-                ...f,
-                inception_date: firstDate,
-                fund_age_years: ageYears,
-              };
-            } catch {
-              return null;
-            }
-          })
-        );
-        if (!cancelled) {
-          const filtered = checks
-            .filter(Boolean)
-            .sort((a, b) => String(a.scheme_name || '').localeCompare(String(b.scheme_name || '')));
-          setEligibleFunds(filtered);
-          setIsLoadingEligible(false);
-        }
-      } catch {
-        if (!cancelled) {
-          setEligibleFunds([]);
-          setIsLoadingEligible(false);
-        }
-      }
-    };
-
-    if (!funds.length) return undefined;
-
-    run();
-    return () => {
-      cancelled = true;
-    };
-  }, [funds]);
-
-  return { eligibleFunds, isLoadingEligible };
-};
-
-const FundSearchSelect = ({
-  label = 'Select Fund',
-  funds = [],
-  searchFunds = [],
-  value = '',
-  onChange,
-  placeholder = 'Search fund name, AMC, or scheme code',
-}) => {
-  const inputRef = useRef(null);
-  const blurTimerRef = useRef(null);
-  const [query, setQuery] = useState('');
-  const [isOpen, setIsOpen] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
-  const [highlightedIndex, setHighlightedIndex] = useState(-1);
-  const topAumFundNames = useMemo(() => ([
-    'Parag Parikh Flexi Cap Fund',
-    'HDFC Balanced Advantage Fund',
-    'ICICI Prudential Balanced Advantage Fund',
-    'Nippon India Large Cap Fund',
-    'Nippon India Multi Cap Fund',
-    'SBI Contra Fund',
-    'SBI Focused Equity Fund',
-  ]), []);
-  const topFunds = useMemo(() => {
-    const selected = [];
-    const usedCodes = new Set();
-
-    topAumFundNames.forEach((targetName) => {
-      const match = funds.find((f) =>
-        String(f?.scheme_name || '').toLowerCase().includes(targetName.toLowerCase())
-      );
-      if (match && !usedCodes.has(String(match.scheme_code))) {
-        selected.push(match);
-        usedCodes.add(String(match.scheme_code));
-      }
-    });
-
-    if (selected.length < 7) {
-      funds.forEach((f) => {
-        const code = String(f.scheme_code);
-        if (!usedCodes.has(code) && selected.length < 7) {
-          selected.push(f);
-          usedCodes.add(code);
-        }
-      });
-    }
-
-    return selected.slice(0, 7);
-  }, [funds, topAumFundNames]);
-  const searchableFunds = searchFunds.length ? searchFunds : funds;
-  const selectedFund = useMemo(
-    () => searchableFunds.find((f) => String(f.scheme_code) === String(value)) || funds.find((f) => String(f.scheme_code) === String(value)),
-    [searchableFunds, funds, value]
-  );
-
-  const filteredFunds = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) {
-      const topCodes = new Set(topFunds.map((f) => String(f.scheme_code)));
-      const restFunds = searchableFunds.filter((f) => !topCodes.has(String(f.scheme_code)));
-      return [...topFunds, ...restFunds];
-    }
-    return searchableFunds.filter((f) => {
-      const hay = `${f.scheme_name || ''} ${f.fund_house || ''} ${f.scheme_code || ''}`.toLowerCase();
-      return hay.includes(q);
-    });
-  }, [topFunds, searchableFunds, query]);
-
-  const selectedValue = String(value || '');
-  const selectedName = selectedFund?.scheme_name || selectedFund?.schemeName || selectedFund?.name || '';
-  const showSelectedLabel = Boolean(selectedFund) && !isFocused && !query;
-
-  useEffect(() => () => {
-    if (blurTimerRef.current) clearTimeout(blurTimerRef.current);
-  }, []);
-
-  const selectFund = (f) => {
-    onChange(String(f.scheme_code));
-    setQuery('');
-    setIsOpen(false);
-    setIsFocused(false);
-    setHighlightedIndex(-1);
-    if (blurTimerRef.current) clearTimeout(blurTimerRef.current);
-    requestAnimationFrame(() => {
-      if (!inputRef.current) return;
-      inputRef.current.scrollLeft = 0;
-      inputRef.current.blur();
-    });
-  };
-
-  return (
-    <div className="relative w-full min-w-0 max-w-full">
-      <label className="text-xs font-bold text-navy-900/70">{label}</label>
-      <div className="relative mt-2 w-full min-w-0 max-w-full">
-        <input
-          ref={inputRef}
-          className="w-full max-w-full min-w-0 border rounded-xl px-3 py-2 text-sm overflow-hidden whitespace-nowrap"
-          type="text"
-          value={isFocused ? query : ''}
-          onFocus={() => {
-            if (blurTimerRef.current) clearTimeout(blurTimerRef.current);
-            setIsFocused(true);
-            setIsOpen(true);
-            setHighlightedIndex(0);
-          }}
-          onChange={(e) => {
-            const next = e.target.value;
-            setQuery(next);
-            if (!next.trim()) onChange('');
-            setIsOpen(true);
-            setHighlightedIndex(0);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') {
-              setQuery('');
-              onChange('');
-              setIsOpen(true);
-              setHighlightedIndex(-1);
-              return;
-            }
-            if (!filteredFunds.length) return;
-            if (e.key === 'ArrowDown') {
-              e.preventDefault();
-              setIsOpen(true);
-              setHighlightedIndex((prev) => (prev + 1) % filteredFunds.length);
-              return;
-            }
-            if (e.key === 'ArrowUp') {
-              e.preventDefault();
-              setIsOpen(true);
-              setHighlightedIndex((prev) => (prev <= 0 ? filteredFunds.length - 1 : prev - 1));
-              return;
-            }
-            if (e.key === 'Enter' && isOpen) {
-              e.preventDefault();
-              const index = highlightedIndex >= 0 ? highlightedIndex : 0;
-              selectFund(filteredFunds[index]);
-              return;
-            }
-            if (e.key === 'Tab' && isOpen && highlightedIndex >= 0) {
-              e.preventDefault();
-              selectFund(filteredFunds[highlightedIndex]);
-            }
-          }}
-          onBlur={() => {
-            blurTimerRef.current = setTimeout(() => {
-              setIsFocused(false);
-              setIsOpen(false);
-              setQuery('');
-              if (inputRef.current) inputRef.current.scrollLeft = 0;
-            }, 120);
-          }}
-          placeholder={showSelectedLabel ? '' : placeholder}
-          style={{ textOverflow: 'ellipsis' }}
-        />
-        {showSelectedLabel && (
-          <div className="pointer-events-none absolute inset-0 z-10 flex items-center min-w-0 max-w-full px-3 text-sm">
-            <span className="block min-w-0 max-w-full truncate">{selectedName}</span>
-          </div>
-        )}
-      </div>
-      {isOpen && (
-        <div className="mt-2 w-full h-40 sm:h-48 lg:h-56 max-h-[35vh] overflow-auto rounded-xl border bg-white shadow-sm">
-          {filteredFunds.length ? filteredFunds.map((f, i) => (
-            <button
-              key={f.scheme_code}
-              type="button"
-              className={`w-full px-3 py-2 text-left text-sm break-words hover:bg-[#F5F5F0] ${(i === highlightedIndex || String(f.scheme_code) === String(selectedValue)) ? 'bg-[#FAF9F6] font-semibold' : ''}`}
-              onMouseDown={(e) => e.preventDefault()}
-              onMouseEnter={() => setHighlightedIndex(i)}
-              onClick={() => selectFund(f)}
-            >
-              {f.scheme_name}
-            </button>
-          )) : (
-            <p className="px-3 py-2 text-sm text-navy-900/50">No matching funds</p>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
 
 const SimpleCalcCard = ({ title, children, resultRows }) => (
   <div className="p-6 lg:p-8">
-    <h3 className="text-xl font-serif font-bold text-navy-900 mb-5">{title}</h3>
+    <h3 className="text-xl font-sans font-black text-navy-900 mb-5">{title}</h3>
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start min-w-0">{children}</div>
     <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
       {resultRows.map((x) => (
@@ -1728,7 +1500,7 @@ const SWPCalculator = () => {
     >
       <CalculatorInput label="Initial Corpus" value={corpus} onChange={setCorpus} unit={INR_SYMBOL} isCurrency min={100000} max={50000000} step={10000} />
       <CalculatorInput label="Monthly Withdrawal" value={withdrawal} onChange={setWithdrawal} unit={INR_SYMBOL} isCurrency min={1000} max={500000} step={500} />
-      <CalculatorInput label="Expected Return (%)" value={rate} onChange={setRate} unit="%" min={1} max={20} step={0.1} />
+      <CalculatorInput label="Expected Return (%)" value={rate} onChange={setRate} unit="%" min={2} max={13} step={0.1} />
       <CalculatorInput label="Duration (Years)" value={years} onChange={setYears} min={1} max={40} step={1} />
     </SimpleCalcCard>
   );
@@ -1760,8 +1532,8 @@ const STPCalculator = () => {
     >
       <CalculatorInput label="Source Corpus" value={source} onChange={setSource} unit={INR_SYMBOL} isCurrency min={100000} max={50000000} step={10000} />
       <CalculatorInput label="Monthly Transfer" value={monthly} onChange={setMonthly} unit={INR_SYMBOL} isCurrency min={1000} max={500000} step={500} />
-      <CalculatorInput label="Debt Return (%)" value={debtRate} onChange={setDebtRate} unit="%" min={1} max={12} step={0.1} />
-      <CalculatorInput label="Equity Return (%)" value={equityRate} onChange={setEquityRate} unit="%" min={1} max={20} step={0.1} />
+      <CalculatorInput label="Debt Return (%)" value={debtRate} onChange={setDebtRate} unit="%" min={2} max={13} step={0.1} />
+      <CalculatorInput label="Equity Return (%)" value={equityRate} onChange={setEquityRate} unit="%" min={2} max={13} step={0.1} />
       <CalculatorInput label="Transfer Months" value={months} onChange={setMonths} min={1} max={120} step={1} />
     </SimpleCalcCard>
   );
@@ -1794,7 +1566,7 @@ const StepUpSIPCalculator = () => {
     >
       <CalculatorInput label="Starting SIP" value={sip} onChange={setSip} unit={INR_SYMBOL} isCurrency min={500} max={200000} step={500} />
       <CalculatorInput label="Annual Step-Up (%)" value={stepUp} onChange={setStepUp} unit="%" min={0} max={30} step={1} />
-      <CalculatorInput label="Expected Return (%)" value={rate} onChange={setRate} unit="%" min={1} max={20} step={0.1} />
+      <CalculatorInput label="Expected Return (%)" value={rate} onChange={setRate} unit="%" min={2} max={13} step={0.1} />
       <CalculatorInput label="Duration (Years)" value={years} onChange={setYears} min={1} max={40} step={1} />
     </SimpleCalcCard>
   );
@@ -1823,7 +1595,7 @@ const SIPDelayCostCalculator = () => {
       ]}
     >
       <CalculatorInput label="Monthly SIP" value={sip} onChange={setSip} unit={INR_SYMBOL} isCurrency min={500} max={200000} step={500} />
-      <CalculatorInput label="Expected Return (%)" value={rate} onChange={setRate} unit="%" min={1} max={20} step={0.1} />
+      <CalculatorInput label="Expected Return (%)" value={rate} onChange={setRate} unit="%" min={2} max={13} step={0.1} />
       <CalculatorInput label="Target Horizon (Years)" value={years} onChange={setYears} min={1} max={40} step={1} />
       <CalculatorInput label="Delay (Years)" value={delayYears} onChange={setDelayYears} min={1} max={10} step={1} />
     </SimpleCalcCard>
@@ -1850,7 +1622,7 @@ const SIPvsLumpsumCalculator = () => {
     >
       <CalculatorInput label="Monthly SIP" value={monthlySip} onChange={setMonthlySip} unit={INR_SYMBOL} isCurrency min={500} max={200000} step={500} />
       <CalculatorInput label="Lumpsum Amount" value={lumpsum} onChange={setLumpsum} unit={INR_SYMBOL} isCurrency min={10000} max={100000000} step={10000} />
-      <CalculatorInput label="Expected Return (%)" value={rate} onChange={setRate} unit="%" min={1} max={20} step={0.1} />
+      <CalculatorInput label="Expected Return (%)" value={rate} onChange={setRate} unit="%" min={2} max={13} step={0.1} />
       <CalculatorInput label="Duration (Years)" value={years} onChange={setYears} min={1} max={40} step={1} />
     </SimpleCalcCard>
   );
@@ -1878,162 +1650,11 @@ const GoalPlanner = ({ title }) => {
       <CalculatorInput label="Goal Cost Today" value={goalCost} onChange={setGoalCost} unit={INR_SYMBOL} isCurrency min={100000} max={100000000} step={10000} />
       <CalculatorInput label="Years to Goal" value={years} onChange={setYears} min={1} max={40} step={1} />
       <CalculatorInput label="Goal Inflation (%)" value={inflation} onChange={setInflation} unit="%" min={1} max={15} step={0.1} />
-      <CalculatorInput label="Expected Return (%)" value={returnRate} onChange={setReturnRate} unit="%" min={1} max={20} step={0.1} />
+      <CalculatorInput label="Expected Return (%)" value={returnRate} onChange={setReturnRate} unit="%" min={2} max={13} step={0.1} />
     </SimpleCalcCard>
   );
 };
 
-const FundCagrReturnCalculator = () => {
-  const { eligibleFunds: funds, isLoadingEligible } = useEligibleFundsForCalculators();
-  const allFunds = useFundsIndexData();
-  const [code, setCode] = useState('');
-  const [amount, setAmount] = useState(100000);
-  const [years, setYears] = useState(10);
-  const fund = code ? funds.find((x) => String(x.scheme_code) === String(code)) : null;
-  const cagr = Number(fund?.cagr_5y ?? 0);
-  const value = amount * ((1 + cagr / 100) ** years);
-  if (!isLoadingEligible && !funds.length) return <SimpleCalcCard title="Fund CAGR Return Calculator" resultRows={[{ label: 'Status', value: 'No eligible funds found' }, { label: 'Filter', value: '10Y+ age' }, { label: '5Y CAGR', value: '>10%' }]}><div /></SimpleCalcCard>;
-  return (
-    <SimpleCalcCard title="Fund CAGR Return Calculator" resultRows={[{ label: '5Y Fund CAGR Used', value: fund ? `${Number(cagr).toFixed(2)}%` : 'NA' }, { label: 'Future Value', value: fund ? formatCurrency(value) : 'NA', className: 'text-emerald-600' }, { label: 'Fund', value: fund?.scheme_name || 'NA' }]}>
-      <FundSearchSelect funds={funds} searchFunds={allFunds} value={code} onChange={setCode} />
-      <CalculatorInput label="Investment Amount" value={amount} onChange={setAmount} unit={INR_SYMBOL} isCurrency min={1000} max={100000000} step={1000} />
-      <CalculatorInput label="Years" value={years} onChange={setYears} min={1} max={30} step={1} />
-    </SimpleCalcCard>
-  );
-};
-
-const FundSipReturnCalculator = () => {
-  const { eligibleFunds: funds, isLoadingEligible } = useEligibleFundsForCalculators();
-  const allFunds = useFundsIndexData();
-  const [code, setCode] = useState('');
-  const [sip, setSip] = useState(10000);
-  const [years, setYears] = useState(10);
-  const fund = code ? funds.find((x) => String(x.scheme_code) === String(code)) : null;
-  const cagr = Number(fund?.cagr_5y ?? 0);
-  const r = cagr / 1200;
-  const n = years * 12;
-  const total = r === 0 ? sip * n : sip * (((1 + r) ** n - 1) / r) * (1 + r);
-  if (!isLoadingEligible && !funds.length) return <SimpleCalcCard title="Fund SIP Return Calculator" resultRows={[{ label: 'Status', value: 'No eligible funds found' }, { label: 'Filter', value: '10Y+ age' }, { label: '5Y CAGR', value: '>10%' }]}><div /></SimpleCalcCard>;
-  return (
-    <SimpleCalcCard title="Fund SIP Return Calculator" resultRows={[{ label: '5Y Fund CAGR Used', value: fund ? `${Number(cagr).toFixed(2)}%` : 'NA' }, { label: 'Estimated Wealth', value: fund ? formatCurrency(total) : 'NA', className: 'text-emerald-600' }, { label: 'Invested', value: formatCurrency(sip * n) }]}>
-      <FundSearchSelect funds={funds} searchFunds={allFunds} value={code} onChange={setCode} />
-      <CalculatorInput label="Monthly SIP" value={sip} onChange={setSip} unit={INR_SYMBOL} isCurrency min={500} max={200000} step={500} />
-      <CalculatorInput label="Years" value={years} onChange={setYears} min={1} max={30} step={1} />
-    </SimpleCalcCard>
-  );
-};
-
-const FundLumpsumReturnCalculator = () => {
-  const { eligibleFunds: funds, isLoadingEligible } = useEligibleFundsForCalculators();
-  const allFunds = useFundsIndexData();
-  const [code, setCode] = useState('');
-  const [amount, setAmount] = useState(500000);
-  const [years, setYears] = useState(10);
-  const fund = code ? funds.find((x) => String(x.scheme_code) === String(code)) : null;
-  const cagr = Number(fund?.cagr_5y ?? 0);
-  const total = amount * ((1 + cagr / 100) ** years);
-  if (!isLoadingEligible && !funds.length) return <SimpleCalcCard title="Fund Lumpsum Return Calculator" resultRows={[{ label: 'Status', value: 'No eligible funds found' }, { label: 'Filter', value: '10Y+ age' }, { label: '5Y CAGR', value: '>10%' }]}><div /></SimpleCalcCard>;
-  return (
-    <SimpleCalcCard title="Fund Lumpsum Return Calculator" resultRows={[{ label: '5Y Fund CAGR Used', value: fund ? `${Number(cagr).toFixed(2)}%` : 'NA' }, { label: 'Estimated Value', value: fund ? formatCurrency(total) : 'NA', className: 'text-emerald-600' }, { label: 'Gain', value: fund ? formatCurrency(total - amount) : 'NA' }]}>
-      <FundSearchSelect funds={funds} searchFunds={allFunds} value={code} onChange={setCode} />
-      <CalculatorInput label="Lumpsum Amount" value={amount} onChange={setAmount} unit={INR_SYMBOL} isCurrency min={1000} max={100000000} step={1000} />
-      <CalculatorInput label="Years" value={years} onChange={setYears} min={1} max={30} step={1} />
-    </SimpleCalcCard>
-  );
-};
-
-const FundPastPerformanceCalculator = () => {
-  const { eligibleFunds: funds, isLoadingEligible } = useEligibleFundsForCalculators();
-  const allFunds = useFundsIndexData();
-  const [code, setCode] = useState('');
-  const [amount, setAmount] = useState(100000);
-  const [period, setPeriod] = useState(3);
-  const [value, setValue] = useState(null);
-  const [name, setName] = useState('');
-  const fund = code ? funds.find((x) => String(x.scheme_code) === String(code)) || null : null;
-  useEffect(() => {
-    let cancelled = false;
-    const run = async () => {
-      if (!fund?.scheme_code) { if (!cancelled) { setValue(null); setName(''); } return; }
-      try {
-        const res = await fetch(`${import.meta.env.BASE_URL}mf-data/funds/${fund.scheme_code}.json`);
-        const data = await res.json();
-        const rows = (data?.nav_history || []).map((x) => ({ nav: Number(x.nav), dt: parseDate(x.date) })).filter((x) => x.dt && Number.isFinite(x.nav));
-        if (!rows.length) return;
-        const latest = rows[rows.length - 1];
-        const from = new Date(latest.dt);
-        from.setFullYear(from.getFullYear() - Number(period));
-        const start = rows.find((x) => x.dt >= from) || rows[0];
-        const growth = latest.nav / start.nav;
-        if (!cancelled) {
-          setValue(amount * growth);
-          setName(data?.meta?.scheme_name || fund.scheme_name);
-        }
-      } catch {
-        if (!cancelled) setValue(null);
-      }
-    };
-    run();
-    return () => { cancelled = true; };
-  }, [fund?.scheme_code, fund?.scheme_name, amount, period]);
-  if (!isLoadingEligible && !funds.length) return <SimpleCalcCard title="Fund Past Performance Calculator" resultRows={[{ label: 'Status', value: 'No eligible funds found' }, { label: 'Filter', value: '10Y+ age' }, { label: '5Y CAGR', value: '>10%' }]}><div /></SimpleCalcCard>;
-  return (
-    <SimpleCalcCard title="Fund Past Performance Calculator" resultRows={[{ label: 'If Invested Then', value: fund ? formatCurrency(amount) : 'NA' }, { label: `Value After ${period}Y`, value: value === null ? 'NA' : formatCurrency(value), className: 'text-emerald-600' }, { label: 'Fund', value: name || fund?.scheme_name || 'Select a fund' }]}>
-      <FundSearchSelect funds={funds} searchFunds={allFunds} value={code} onChange={setCode} />
-      <CalculatorInput label="Investment Amount" value={amount} onChange={setAmount} unit={INR_SYMBOL} isCurrency min={1000} max={100000000} step={1000} />
-      <div>
-        <label className="text-xs font-bold text-navy-900/70">Period</label>
-        <select className="mt-2 w-full border rounded-xl p-3 text-sm" value={period} onChange={(e) => setPeriod(Number(e.target.value))}>
-          <option value={1}>1 Year</option><option value={3}>3 Years</option><option value={5}>5 Years</option><option value={10}>10 Years</option>
-        </select>
-      </div>
-    </SimpleCalcCard>
-  );
-};
-
-const FundComparisonCalculator = () => {
-  const { eligibleFunds: funds, isLoadingEligible } = useEligibleFundsForCalculators();
-  const allFunds = useFundsIndexData();
-  const [a, setA] = useState('');
-  const [b, setB] = useState('');
-  const [amount, setAmount] = useState(100000);
-  const [years, setYears] = useState(10);
-  const fa = a ? funds.find((x) => String(x.scheme_code) === String(a)) || null : null;
-  const fb = b ? funds.find((x) => String(x.scheme_code) === String(b)) || null : null;
-  const va = fa ? amount * ((1 + Number(fa.cagr_5y ?? 0) / 100) ** years) : null;
-  const vb = fb ? amount * ((1 + Number(fb.cagr_5y ?? 0) / 100) ** years) : null;
-  if (!isLoadingEligible && !funds.length) return <SimpleCalcCard title="Fund Comparison Calculator" resultRows={[{ label: 'Status', value: 'No eligible funds found' }, { label: 'Filter', value: '10Y+ age' }, { label: '5Y CAGR', value: '>10%' }]}><div /></SimpleCalcCard>;
-  return (
-    <SimpleCalcCard title="Fund Comparison Calculator" resultRows={[{ label: 'Fund A Value', value: va !== null ? formatCurrency(va) : 'NA' }, { label: 'Fund B Value', value: vb !== null ? formatCurrency(vb) : 'NA' }, { label: 'Difference', value: (va !== null && vb !== null) ? formatCurrency(Math.abs(va - vb)) : 'NA', className: 'text-emerald-600' }]}>
-      <FundSearchSelect label="Fund A" funds={funds} searchFunds={allFunds} value={a} onChange={setA} />
-      <FundSearchSelect label="Fund B" funds={funds} searchFunds={allFunds} value={b} onChange={setB} />
-      <CalculatorInput label="Investment Amount" value={amount} onChange={setAmount} unit={INR_SYMBOL} isCurrency min={1000} max={100000000} step={1000} />
-      <CalculatorInput label="Years" value={years} onChange={setYears} min={1} max={30} step={1} />
-    </SimpleCalcCard>
-  );
-};
-
-const BestFundCategoryReturnCalculator = () => {
-  const funds = useFundsIndexData();
-  const [amount, setAmount] = useState(100000);
-  const [years, setYears] = useState(10);
-  const [cat, setCat] = useState('Large Cap');
-  const map = {
-    'Large Cap': /large cap/i, 'Flexi Cap': /flexi cap/i, 'Mid Cap': /mid cap/i, 'Small Cap': /small cap/i,
-    ELSS: /elss/i, Hybrid: /hybrid/i, Debt: /debt scheme/i
-  };
-  const matched = funds.filter((f) => map[cat].test(String(f.scheme_category || '')) || map[cat].test(String(f.scheme_name || '')));
-  const vals = matched.map((f) => Number(f.cagr_5y)).filter((x) => Number.isFinite(x));
-  const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 10;
-  const future = amount * ((1 + avg / 100) ** years);
-  return (
-    <SimpleCalcCard title="Category Return Calculator" resultRows={[{ label: 'Avg 5Y CAGR', value: `${avg.toFixed(2)}%` }, { label: 'Projected Value', value: formatCurrency(future), className: 'text-emerald-600' }, { label: 'Funds Considered', value: `${matched.length}` }]}>
-      <div><label className="text-xs font-bold text-navy-900/70">Category</label><select className="mt-2 w-full border rounded-xl p-3 text-sm" value={cat} onChange={(e) => setCat(e.target.value)}>{Object.keys(map).map((k) => <option key={k} value={k}>{k}</option>)}</select></div>
-      <CalculatorInput label="Investment Amount" value={amount} onChange={setAmount} unit={INR_SYMBOL} isCurrency min={1000} max={100000000} step={1000} />
-      <CalculatorInput label="Years" value={years} onChange={setYears} min={1} max={30} step={1} />
-    </SimpleCalcCard>
-  );
-};
 
 export const tools = [
   {
@@ -2066,7 +1687,7 @@ export const tools = [
       },
       {
         q: "What is the minimum SIP amount?",
-        a: "Most mutual fund houses allow SIPs starting from as low as **â‚¹100 to â‚¹500 per month**. Some micro-SIP schemes go even lower. There is no maximum cap - you can invest any amount that suits your financial plan."
+        a: "Most mutual fund houses allow SIPs starting from as low as **₹100 to ₹500 per month**. Some micro-SIP schemes go even lower. There is no maximum cap - you can invest any amount that suits your financial plan."
       },
       {
         q: "Can I stop or modify my SIP anytime?",
@@ -2078,7 +1699,7 @@ export const tools = [
       },
       {
         q: "What is Step-Up SIP?",
-        a: "A **Step-Up SIP** (also called Top-Up SIP) allows you to increase your SIP amount by a fixed percentage or absolute amount every year. For example, increasing by 10% annually means your first-year SIP of â‚¹5,000/month becomes â‚¹5,500 in year 2, â‚¹6,050 in year 3, and so on. This aligns investments with your growing income and dramatically boosts the final corpus."
+        a: "A **Step-Up SIP** (also called Top-Up SIP) allows you to increase your SIP amount by a fixed percentage or absolute amount every year. For example, increasing by 10% annually means your first-year SIP of ₹5,000/month becomes ₹5,500 in year 2, ₹6,050 in year 3, and so on. This aligns investments with your growing income and dramatically boosts the final corpus."
       }
     ]
   },
@@ -2480,120 +2101,6 @@ export const tools = [
       { q: "How often should I revise the goal amount?", a: "Review every 6-12 months as fares and forex can change materially." }
     ]
   },
-  {
-    id: 'fund-cagr-return',
-    category: 'Fund-Based Return Calculators',
-    title: 'Fund CAGR Return Calculator',
-    desc: 'Select a fund and project future value using historical CAGR.',
-    icon: LineChart,
-    component: <FundCagrReturnCalculator />,
-    formula: {
-      label: "Fund CAGR Projection (Lumpsum)",
-      equation: (<>Future Value = P * (1 + CAGR<sub className="text-xs">5Y</sub>)<sup className="text-xs">n</sup></>),
-      details: ["P = Current investment amount", "CAGR5Y = Selected fund's 5-year CAGR", "n = Investment years", "Used as deterministic projection input"],
-      chips: ["Fund-specific CAGR", "Compounding", "Historical proxy", "Not guaranteed"]
-    },
-    faqs: [
-      { q: "Why is 5Y CAGR used?", a: "It provides a medium-term historical growth proxy, balancing recency and stability better than very short windows." },
-      { q: "Does this predict actual future return?", a: "No. Historical CAGR is only an assumption anchor. Real returns can be higher or lower." },
-      { q: "Why does result show NA when no fund selected?", a: "To avoid misleading output, calculations are intentionally shown only after a specific fund is selected." }
-    ]
-  },
-  {
-    id: 'fund-sip-return',
-    category: 'Fund-Based Return Calculators',
-    title: 'Fund SIP Return Calculator',
-    desc: 'Select fund + SIP amount and estimate wealth creation.',
-    icon: CalendarClock,
-    component: <FundSipReturnCalculator />,
-    formula: {
-      label: "Fund SIP Future Value",
-      equation: (<>FV = SIP * [((1+i)<sup className="text-xs">n</sup>-1)/i] * (1+i), &nbsp; i = CAGR<sub className="text-xs">5Y</sub>/12</>),
-      details: ["SIP = Monthly contribution", "i = Monthly growth rate from selected fund 5Y CAGR", "n = Total months", "Annuity-due: investment at start of each month"],
-      chips: ["Fund-linked assumption", "Monthly compounding", "Illustrative projection", "Not guaranteed"]
-    },
-    faqs: [
-      { q: "How is this different from generic SIP calculator?", a: "Here the return assumption is dynamically taken from selected fund's 5Y CAGR instead of manual static rate." },
-      { q: "Can past 5Y CAGR repeat?", a: "Not necessarily. It is a reference assumption only; market cycles can shift outcomes significantly." },
-      { q: "Is fund selection restricted?", a: "Default list prioritizes selected top funds, and scrolling/search lets you choose from the full database." }
-    ]
-  },
-  {
-    id: 'fund-lumpsum-return',
-    category: 'Fund-Based Return Calculators',
-    title: 'Fund Lumpsum Return Calculator',
-    desc: 'Select fund + lumpsum amount and estimate future value.',
-    icon: Banknote,
-    component: <FundLumpsumReturnCalculator />,
-    formula: {
-      label: "Fund Lumpsum Future Value",
-      equation: (<>FV = P * (1 + CAGR<sub className="text-xs">5Y</sub>)<sup className="text-xs">n</sup></>),
-      details: ["P = Lumpsum investment", "CAGR5Y = Selected fund 5-year CAGR", "n = Years", "Gain = FV - P"],
-      chips: ["Fund-specific estimate", "Compounding", "Historical-data based", "Not guaranteed"]
-    },
-    faqs: [
-      { q: "What does this tool output?", a: "It estimates projected value and gain for a one-time amount using the selected fund's 5Y CAGR as return assumption." },
-      { q: "Can I compare with SIP for same fund?", a: "Yes, use Fund SIP Return Calculator for periodic investing and compare projected outcomes for same horizon." },
-      { q: "Is higher CAGR always better?", a: "Not by itself. Evaluate consistency, drawdowns, volatility and suitability for your risk profile." }
-    ]
-  },
-  {
-    id: 'fund-past-performance',
-    category: 'Fund-Based Return Calculators',
-    title: 'Fund Past Performance Calculator',
-    desc: 'See what past investment in selected fund could be worth now.',
-    icon: History,
-    component: <FundPastPerformanceCalculator />,
-    formula: {
-      label: "Historical NAV Backtest",
-      equation: (<>Value Today = Invested Amount * (NAV<sub className="text-xs">latest</sub> / NAV<sub className="text-xs">start</sub>)</>),
-      details: ["NAVstart = NAV near selected lookback date", "NAVlatest = Most recent NAV", "Lookback period = 1Y/3Y/5Y/10Y", "Uses historical data, not CAGR assumption"],
-      chips: ["Historical simulation", "NAV-based ratio", "No forecasting", "Past performance only"]
-    },
-    faqs: [
-      { q: "Is this forward projection?", a: "No. This is a historical what-if simulation based on actual NAV path over selected past period." },
-      { q: "Why can result differ from CAGR method?", a: "This tool uses NAV start/end ratio for actual selected period; CAGR calculators use assumed constant compounding." },
-      { q: "Can this guarantee future performance?", a: "No. Past performance is informational only and must not be treated as future assurance." }
-    ]
-  },
-  {
-    id: 'fund-comparison',
-    category: 'Fund-Based Return Calculators',
-    title: 'Fund Comparison Calculator',
-    desc: 'Compare two funds using same investment amount and tenure.',
-    icon: GitCompareArrows,
-    component: <FundComparisonCalculator />,
-    formula: {
-      label: "Two-Fund Projection",
-      equation: (<>FV<sub className="text-xs">A</sub> = P * (1+CAGR<sub className="text-xs">A,5Y</sub>)<sup className="text-xs">n</sup>, &nbsp; FV<sub className="text-xs">B</sub> = P * (1+CAGR<sub className="text-xs">B,5Y</sub>)<sup className="text-xs">n</sup></>),
-      details: ["P = Same starting investment for both funds", "n = Same tenure", "Difference = |FVA - FVB|", "CAGR inputs taken from selected funds"],
-      chips: ["Like-for-like comparison", "Same capital/tenure", "Historical proxy", "Not guaranteed"]
-    },
-    faqs: [
-      { q: "Is this a complete fund ranking method?", a: "No. It compares projected value under one CAGR-based assumption. Risk and consistency metrics should also be considered." },
-      { q: "Why equal amount and tenure?", a: "Equalizing capital and horizon keeps comparison fair and isolates return-assumption effect." },
-      { q: "Can I compare funds from different categories?", a: "Yes, technically possible, but risk levels may differ significantly, so interpret results with caution." }
-    ]
-  },
-  {
-    id: 'best-category-return',
-    category: 'Fund-Based Return Calculators',
-    title: 'Category Return Calculator',
-    desc: 'Project return based on selected category average CAGR.',
-    icon: Trophy,
-    component: <BestFundCategoryReturnCalculator />,
-    formula: {
-      label: "Category Average Projection",
-      equation: (<>Avg CAGR = (SUM CAGR<sub className="text-xs">5Y,i</sub>) / N, &nbsp; FV = P * (1 + Avg CAGR)<sup className="text-xs">n</sup></>),
-      details: ["N = Number of matched funds in selected category", "Avg CAGR uses available 5Y CAGR values", "P = Investment amount", "n = Years"],
-      chips: ["Category-level estimate", "Mean-based proxy", "Broad comparison", "Not guaranteed"]
-    },
-    faqs: [
-      { q: "Why use category average CAGR?", a: "It gives a broad directional estimate for a segment without relying on a single fund outcome." },
-      { q: "Does category average remove risk?", a: "No. It reduces single-fund dependence in estimation but market/category risk remains." },
-      { q: "Can outliers skew average?", a: "Yes. Extreme performers can pull averages up/down, so use this as a reference, not a decision in isolation." }
-    ]
-  }
 ];
 
 export const CalculatorPage = () => {
@@ -2605,7 +2112,6 @@ export const CalculatorPage = () => {
     const order = [
       'Core Investment Calculators',
       'Goal Based Calculators',
-      'Fund-Based Return Calculators',
     ];
     const map = {};
     tools.forEach((t) => {
@@ -2632,12 +2138,6 @@ export const CalculatorPage = () => {
       'house-goal': { glyph: '\u{1F3E0}', tone: 'from-[#E4F6FF] to-[#D7F2EA]' },
       'car-goal': { glyph: '\u{1F697}', tone: 'from-[#FFE6D4] to-[#FFE2B8]' },
       'vacation-goal': { glyph: '\u{1F3DD}\uFE0F', tone: 'from-[#DBF7FF] to-[#DDF5E9]' },
-      'fund-cagr-return': { glyph: '\u{1F4CA}', tone: 'from-[#DFEAFF] to-[#D7F6FF]' },
-      'fund-sip-return': { glyph: '\u{1F5D3}\uFE0F', tone: 'from-[#FFE9B9] to-[#FDE1B2]' },
-      'fund-lumpsum-return': { glyph: '\u{1F4B5}', tone: 'from-[#DCF6E8] to-[#D8F0FF]' },
-      'fund-past-performance': { glyph: '\u{1F570}\uFE0F', tone: 'from-[#E8EDFF] to-[#E0F7FF]' },
-      'fund-comparison': { glyph: '\u{1F4C8}', tone: 'from-[#E6E0FF] to-[#E0ECFF]' },
-      'best-category-return': { glyph: '\u{1F3C6}', tone: 'from-[#FFE8B9] to-[#FFE7D6]' },
     };
     return map[id] || { glyph: '\u{1F9E0}', tone: 'from-[#E7ECFF] to-[#E0F4FF]' };
   };
@@ -2653,7 +2153,6 @@ export const CalculatorPage = () => {
   const [openCategories, setOpenCategories] = useState({
     'Core Investment Calculators': true,
     'Goal Based Calculators': true,
-    'Fund-Based Return Calculators': true,
   });
 
   useEffect(() => {
@@ -2777,7 +2276,7 @@ export const CalculatorPage = () => {
                 </span>
               </div>
               <p className="text-gray-400 text-[11px] leading-relaxed max-w-3xl text-center xl:text-left mt-2">
-                The calculations are for illustration and educational purposes only. Returns are not guaranteed. Past performance is not indicative of future results.
+                These calculators are for illustration and educational purposes only to help understand the power of compounding. The return rates shown (2%–13%) are based on mean of 10-year rolling returns as prescribed by AMFI. Past performance may or may not be sustained in future and is not a guarantee of any future returns.
               </p>
               <p className="text-gray-400 text-[11px] font-semibold max-w-3xl text-center xl:text-left mt-1">
                 Mutual Fund investments are subject to market risks, read all scheme related documents carefully.
@@ -2790,7 +2289,6 @@ export const CalculatorPage = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              {tool.formula && <FormulaBox formula={tool.formula} />}
               {tool.faqs && <FAQSection faqs={tool.faqs} />}
             </motion.div>
           </div>
@@ -2806,7 +2304,6 @@ const Calculators = () => {
   const homeCategoryOrder = [
     'Core Investment Calculators',
     'Goal Based Calculators',
-    'Fund-Based Return Calculators',
   ];
   const groupedHomeTools = useMemo(() => {
     const map = {};
@@ -2838,8 +2335,8 @@ const Calculators = () => {
       };
     }
     return {
-      title: 'Fund-Based Return Calculators',
-      subtitle: 'Calculation tools for understanding various mutual fund return metrics.',
+      title: category,
+      subtitle: '',
       glow: 'from-[#F7F1E3] via-[#F2E7D2] to-[#F6EEDA]',
       border: 'border-gold/25',
       iconBg: 'bg-[#F7EED8]',
@@ -2883,7 +2380,7 @@ const Calculators = () => {
           </motion.p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-6 items-stretch -mt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-6 items-stretch -mt-6">
           {groupedHomeTools.map((group, i) => (
             <motion.div
               key={group.category}
@@ -2917,7 +2414,7 @@ const Calculators = () => {
                     onMouseEnter={() => setHoveredTool(item.id)}
                     onMouseLeave={() => setHoveredTool(null)}
                     whileHover={{ y: -2 }}
-                    className="relative w-full text-left flex items-center justify-between rounded-xl border border-gray-100/90 bg-white/95 px-3 py-2.5 transition-all group hover:shadow-[0_12px_24px_rgba(10,20,43,0.16)] min-h-[50px] overflow-hidden"
+                    className="relative w-full text-left flex items-center justify-between rounded-xl border border-gray-100/90 bg-white/95 px-4 py-3.5 transition-all group hover:shadow-[0_12px_24px_rgba(10,20,43,0.16)] min-h-[58px] overflow-hidden"
                   >
                     <motion.div
                       className="absolute inset-0 rounded-xl bg-navy-900"
@@ -2928,13 +2425,13 @@ const Calculators = () => {
                       }}
                       transition={{ duration: 0.22, ease: 'easeOut' }}
                     />
-                    <span className="flex items-center gap-2.5 min-w-0 flex-1">
-                      <span className={`relative z-10 inline-flex w-7 h-7 items-center justify-center rounded-lg border ${hoveredTool === item.id ? 'border-gold/40 bg-white/10' : `border-gray-100 ${categoryStyle(group.category).iconBg}`}`}>
-                        <item.icon size={14} className={`${hoveredTool === item.id ? 'text-gold' : 'text-gold'} shrink-0`} />
+                    <span className="flex items-center gap-3 min-w-0 flex-1">
+                      <span className={`relative z-10 inline-flex w-9 h-9 items-center justify-center rounded-lg border ${hoveredTool === item.id ? 'border-gold/40 bg-white/10' : `border-gray-100 ${categoryStyle(group.category).iconBg}`}`}>
+                        <item.icon size={16} className={`${hoveredTool === item.id ? 'text-gold' : 'text-gold'} shrink-0`} />
                       </span>
-                      <span className={`relative z-10 text-sm font-bold leading-tight line-clamp-2 ${hoveredTool === item.id ? 'text-white' : 'text-navy-900'}`}>{item.title}</span>
+                      <span className={`relative z-10 text-[15px] font-bold leading-tight line-clamp-2 ${hoveredTool === item.id ? 'text-white' : 'text-navy-900'}`}>{item.title}</span>
                     </span>
-                    <ArrowRight size={14} className={`relative z-10 transition-all shrink-0 ${hoveredTool === item.id ? 'text-gold translate-x-0.5' : 'text-navy-900/40'}`} />
+                    <ArrowRight size={15} className={`relative z-10 transition-all shrink-0 ${hoveredTool === item.id ? 'text-gold translate-x-0.5' : 'text-navy-900/40'}`} />
                   </motion.button>
                 ))}
               </div>
@@ -2945,7 +2442,7 @@ const Calculators = () => {
         {/* Section Footer Disclaimer */}
         <div className="mt-8 max-w-2xl mx-auto text-center pt-5 border-t border-gold/15">
           <p className="text-[10px] text-gray-400 uppercase tracking-widest font-medium">
-            Calculator results are indicative in nature and should not be construed as investment advice or an assurance of returns.
+            Calculator results are indicative in nature and should not be construed as investment advice or an assurance of returns. Past performance may or may not be sustained in future and is not a guarantee of any future returns.
           </p>
         </div>
       </div>

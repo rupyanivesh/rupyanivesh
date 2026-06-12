@@ -341,7 +341,7 @@ const Footer = () => {
 
   const calculatorCategories = [
     {
-      label: 'Core Investment',
+      label: 'Core Investment Calculators',
       tools: [
         { label: 'SIP Calculator', to: '/sip-calculator' },
         { label: 'Lumpsum Calculator', to: '/lumpsum-calculator' },
@@ -351,23 +351,13 @@ const Footer = () => {
       ],
     },
     {
-      label: 'Goal Based',
+      label: 'Goal Based Calculators',
       tools: [
         { label: 'Retirement Goal Calculator', to: '/retirement-calculator' },
         { label: 'Education Goal Calculator', to: '/education-calculator' },
         { label: 'Inflation Tracker', to: '/inflation-calculator' },
         { label: 'Wedding Goal', to: '/wedding-goal-calculator' },
         { label: 'House Purchase Goal', to: '/house-goal-calculator' },
-      ],
-    },
-    {
-      label: 'Fund-Based Returns',
-      tools: [
-        { label: 'Fund CAGR Return', to: '/fund-cagr-return-calculator' },
-        { label: 'Fund SIP Return', to: '/fund-sip-return-calculator' },
-        { label: 'Fund Lumpsum Return', to: '/fund-lumpsum-return-calculator' },
-        { label: 'Fund Comparison', to: '/fund-comparison-calculator' },
-        { label: 'Category Return', to: '/best-category-return-calculator' },
       ],
     },
   ];
@@ -505,7 +495,7 @@ const Footer = () => {
                         onClick={() => setOpenCalcCategory(isOpen ? null : cat.label)}
                         className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/5 transition-colors group"
                       >
-                        <span className="text-[11px] font-black uppercase tracking-[0.15em] text-gray-300 group-hover:text-gold transition-colors">
+                        <span className="text-[10px] font-black uppercase tracking-[0.1em] text-gray-300 group-hover:text-gold transition-colors whitespace-nowrap">
                           {cat.label}
                         </span>
                         <ChevronRight
