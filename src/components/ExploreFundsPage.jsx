@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet-async';
 
 const UPPERCASE_WORDS = new Set([
   'SBI','HDFC','ICICI','AXIS','DSP','UTI','LIC','IDBI','BOI','HSBC','JM',
-  'PPFAS','ITI','NJ','PGIM','MOSL','ELSS','NFO','ETF','FoF','SIP','NAV',
+  'PPFAS','ITI','NJ','PGIM','MOSL','ELSS','NFO','ETF','FOF','SIP','NAV',
   'AMC','SEBI','MF','US','UK','ESG','IT','PSU','FMCG','CEF','G-SEC','MNC',
 ]);
 
@@ -97,12 +97,19 @@ const getCategoryKey = (category) => {
   return `${top}::${sub}`;
 };
 
-const getRiskBand = (cagr3y) => {
-  const v = Number(cagr3y);
-  if (!Number.isFinite(v)) return { label: 'NA', color: 'bg-gray-400' };
-  if (v < 3) return { label: 'Low', color: 'bg-emerald-500' };
-  if (v < 15) return { label: 'Mid', color: 'bg-amber-500' };
-  return { label: 'High', color: 'bg-rose-500' };
+const getCategorySub = (category) => {
+  const { sub } = getCategoryParts(category);
+  if (!sub || sub === 'NA') return 'NA';
+  return /fund$/i.test(sub.trim()) ? sub : `${sub} Fund`;
+};
+
+const riskConfig = {
+  'Low':              { color: 'bg-green-500',   dot: 'bg-green-500' },
+  'Low to Moderate':  { color: 'bg-lime-500',    dot: 'bg-lime-500' },
+  'Moderate':         { color: 'bg-yellow-500',  dot: 'bg-yellow-500' },
+  'Moderately High':  { color: 'bg-orange-500',  dot: 'bg-orange-500' },
+  'High':             { color: 'bg-red-500',      dot: 'bg-red-500' },
+  'Very High':        { color: 'bg-rose-700',    dot: 'bg-rose-700' },
 };
 
 const riskLevels = ['Low', 'Low to Moderate', 'Moderate', 'Moderately High', 'High', 'Very High'];
@@ -581,8 +588,8 @@ const ScreenerView = () => {
         const cmp = String(a.scheme_category || '').localeCompare(String(b.scheme_category || ''));
         return sortOrder === 'asc' ? cmp : -cmp;
       }
-      const aVal = sortField === 'cagr1' ? Number(a.cagr_1y || -9999) : Number(a.cagr_3y || -9999);
-      const bVal = sortField === 'cagr1' ? Number(b.cagr_1y || -9999) : Number(b.cagr_3y || -9999);
+      const aVal = sortField === 'cagr1' ? Number(a.cagr_1y || -9999) : sortField === 'cagr5' ? Number(a.cagr_5y || -9999) : Number(a.cagr_3y || -9999);
+      const bVal = sortField === 'cagr1' ? Number(b.cagr_1y || -9999) : sortField === 'cagr5' ? Number(b.cagr_5y || -9999) : Number(b.cagr_3y || -9999);
       return sortOrder === 'desc' ? bVal - aVal : aVal - bVal;
     });
     return list;
@@ -655,12 +662,12 @@ const ScreenerView = () => {
             {mobileFiltersOpen ? 'Hide Filters' : 'Show Filters'}
           </button>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6 items-start">
           <motion.aside
             initial={{ opacity: 0, x: -24 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.45, ease: 'easeOut' }}
-            className={`${mobileFiltersOpen ? 'block' : 'hidden'} lg:block lg:sticky lg:top-24 relative overflow-hidden rounded-[28px] border border-[#e8e0d1] bg-gradient-to-b from-[#fffdf8] via-[#fffefc] to-[#f8f3e8] p-5 h-fit shadow-[0_18px_48px_rgba(16,24,40,0.08)]`}>
+            className={`${mobileFiltersOpen ? 'block' : 'hidden'} lg:block lg:sticky lg:top-24 relative rounded-[28px] border border-[#e8e0d1] bg-gradient-to-b from-[#fffdf8] via-[#fffefc] to-[#f8f3e8] p-5 h-fit shadow-[0_18px_48px_rgba(16,24,40,0.08)] lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:overscroll-contain [scrollbar-width:thin] [scrollbar-color:#c5a059_#f0e8d8] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-[#f0e8d8] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#c5a059] [&::-webkit-scrollbar-thumb:hover]:bg-[#a8883d]`}>
             <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#c5a0591f] to-transparent" />
             <div className="relative flex items-center justify-between">
               <h3 className="font-serif text-[1.7rem] leading-none font-bold text-navy-900">Filters</h3>
@@ -707,7 +714,7 @@ const ScreenerView = () => {
                   className="w-full rounded-lg border border-gray-200 bg-white pl-8 pr-2 py-1.5 text-sm outline-none focus:border-gold"
                 />
               </div>
-              <div className="mt-3 max-h-[28rem] overflow-y-auto overflow-x-visible space-y-2 pr-1">
+              <div className="mt-3 max-h-[28rem] overflow-y-auto overflow-x-visible space-y-2 pr-1 overscroll-contain [scrollbar-width:thin] [scrollbar-color:#e2d9c9_transparent]">
                 {filteredCategoryTree.map((group) => (
                   <div key={group.name} className="border-l border-[#ece4d4] pl-2">
                     <button
@@ -744,7 +751,7 @@ const ScreenerView = () => {
 
             <div className="relative mt-4 rounded-2xl border border-[#eee8db] bg-[#fffefb] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-navy-900/50">AMC (A-Z)</p>
-              <div className="mt-2 max-h-52 overflow-auto space-y-1 pr-1">
+              <div className="mt-2 max-h-52 overflow-y-auto space-y-1 pr-1 overscroll-contain [scrollbar-width:thin] [scrollbar-color:#e2d9c9_transparent]">
                 {amcOptions.map((amc) => (
                   <label key={amc} className="flex items-center gap-2 text-sm text-navy-900/80 hover:text-navy-900">
                     <input type="checkbox" checked={selectedAmcs.includes(amc)} onChange={() => toggleValue(amc, selectedAmcs, setSelectedAmcs)} />
@@ -754,86 +761,6 @@ const ScreenerView = () => {
               </div>
             </div>
 
-            <div className="relative mt-4 rounded-2xl border border-[#eee8db] bg-[#fffefb] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-navy-900/50">CAGR 3Y (%)</p>
-              <div className="mt-2 h-2 rounded-full bg-gradient-to-r from-navy-900 to-gold" />
-              <div className="mt-3 grid grid-cols-3 items-center gap-2 text-sm">
-                <input
-                  type="number"
-                  min={CAGR_RANGE.min}
-                  max={CAGR_RANGE.max}
-                  value={cagrMin}
-                  onChange={(e) => setCagrMin(Math.min(Math.max(Number(e.target.value || CAGR_RANGE.min), CAGR_RANGE.min), cagrMax))}
-                  className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-center bg-white"
-                />
-                <p className="text-center text-navy-900/60">to</p>
-                <input
-                  type="number"
-                  min={CAGR_RANGE.min}
-                  max={CAGR_RANGE.max}
-                  value={cagrMax}
-                  onChange={(e) => setCagrMax(Math.max(Math.min(Number(e.target.value || CAGR_RANGE.max), CAGR_RANGE.max), cagrMin))}
-                  className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-center bg-white"
-                />
-              </div>
-              <div className="mt-2">
-                <div className="relative h-6">
-                  <div className="absolute top-1/2 -translate-y-1/2 h-1.5 w-full rounded-full bg-gray-200" />
-                  <div
-                    className="absolute top-1/2 -translate-y-1/2 h-1.5 rounded-full bg-gradient-to-r from-navy-900 to-gold"
-                    style={{
-                      left: `${((cagrMin - CAGR_RANGE.min) / (CAGR_RANGE.max - CAGR_RANGE.min)) * 100}%`,
-                      right: `${100 - ((cagrMax - CAGR_RANGE.min) / (CAGR_RANGE.max - CAGR_RANGE.min)) * 100}%`,
-                    }}
-                  />
-                  <input
-                    type="range"
-                    min={CAGR_RANGE.min}
-                    max={CAGR_RANGE.max}
-                    value={cagrMin}
-                    onChange={(e) => setCagrMin(Math.min(Number(e.target.value), cagrMax))}
-                    className="absolute inset-0 w-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-navy-900 [&::-webkit-slider-thumb]:shadow-sm [&::-webkit-slider-thumb]:transition [&::-webkit-slider-thumb]:duration-150 [&::-webkit-slider-thumb]:active:scale-110 [&::-webkit-slider-thumb]:active:shadow-[0_0_0_6px_rgba(15,23,42,0.18)] [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-navy-900"
-                  />
-                  <input
-                    type="range"
-                    min={CAGR_RANGE.min}
-                    max={CAGR_RANGE.max}
-                    value={cagrMax}
-                    onChange={(e) => setCagrMax(Math.max(Number(e.target.value), cagrMin))}
-                    className="absolute inset-0 w-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-gold [&::-webkit-slider-thumb]:shadow-sm [&::-webkit-slider-thumb]:transition [&::-webkit-slider-thumb]:duration-150 [&::-webkit-slider-thumb]:active:scale-110 [&::-webkit-slider-thumb]:active:shadow-[0_0_0_6px_rgba(197,160,89,0.25)] [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-gold"
-                  />
-                </div>
-              </div>
-              <div className="mt-3 grid grid-cols-3 gap-0 rounded-lg overflow-hidden border border-gray-200">
-                <button
-                  onClick={() => applyCagrBand('low')}
-                  className={`py-2 text-sm font-semibold border-r border-gray-200 transition-colors ${activeCagrBand === 'low'
-                    ? 'bg-navy-900 text-white'
-                    : 'bg-white hover:bg-[#f9f4e8]'
-                    }`}
-                >
-                  Low
-                </button>
-                <button
-                  onClick={() => applyCagrBand('mid')}
-                  className={`py-2 text-sm font-semibold border-r border-gray-200 transition-colors ${activeCagrBand === 'mid'
-                    ? 'bg-navy-900 text-white'
-                    : 'bg-white hover:bg-[#f9f4e8]'
-                    }`}
-                >
-                  Mid
-                </button>
-                <button
-                  onClick={() => applyCagrBand('high')}
-                  className={`py-2 text-sm font-semibold transition-colors ${activeCagrBand === 'high'
-                    ? 'bg-navy-900 text-white'
-                    : 'bg-white hover:bg-[#f9f4e8]'
-                    }`}
-                >
-                  High
-                </button>
-              </div>
-            </div>
           </motion.aside>
 
           <motion.div
@@ -847,6 +774,7 @@ const ScreenerView = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.2 }}
                 className="text-[1.8rem] md:text-[2.35rem] leading-[1.08] font-serif font-bold text-navy-900 tracking-tight">Mutual Funds Screener</motion.h1>
+              <p className="mt-1 text-[11px] text-navy-900/50 font-semibold">RupyaNivesh · AMFI-Registered Mutual Fund Distributor · ARN-361484 &nbsp;|&nbsp; For informational purposes only — not investment advice</p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <div className="relative w-full md:w-[420px]">
                   <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-navy-900/40" />
@@ -877,7 +805,7 @@ const ScreenerView = () => {
 
                   <div className="mt-2 rounded-lg border border-[#efe9dc] bg-[#fffefb] p-2">
                     <p className="text-[10px] uppercase tracking-[0.12em] text-navy-900/45 font-bold">Category</p>
-                    <p className="text-sm text-navy-900/80 leading-snug mt-0.5">{fund.scheme_category || 'NA'}</p>
+                    <p className="text-sm text-navy-900/80 leading-snug mt-0.5">{getCategorySub(fund.scheme_category)}</p>
                   </div>
 
                   <div className="mt-2 grid grid-cols-2 sm:grid-cols-5 gap-1 rounded-lg border border-[#efe9dc] overflow-hidden">
@@ -898,11 +826,12 @@ const ScreenerView = () => {
                       <p className={`text-[10px] font-semibold break-words ${pctClass(fund.cagr_3y)}`}>{formatPct(fund.cagr_3y)}</p>
                     </div>
                     <div className="bg-[#faf6ee] p-1.5 min-w-0 col-span-2 sm:col-span-1">
-                      <p className="text-[9px] uppercase text-navy-900/45 font-bold">Risk</p>
+                      <p className="text-[9px] uppercase text-navy-900/45 font-bold">Risk (Riskometer)</p>
                       <div className="inline-flex items-center gap-1">
-                        <span className={`w-2 h-2 rounded-full ${getRiskBand(fund.cagr_3y).color}`} />
-                        <span className="text-[11px] font-semibold text-navy-900/75">{getRiskBand(fund.cagr_3y).label}</span>
+                        <span className={`w-2 h-2 rounded-full shrink-0 ${riskConfig[inferRisk(fund)]?.dot || 'bg-gray-400'}`} />
+                        <span className="text-[10px] font-semibold text-navy-900/75 leading-tight">{inferRisk(fund)}</span>
                       </div>
+                      <MiniRiskometer risk={inferRisk(fund)} />
                     </div>
                   </div>
                 </div>
@@ -910,45 +839,48 @@ const ScreenerView = () => {
             </div>
 
             <div className="hidden lg:block overflow-x-auto">
-              <table className="w-full min-w-[1000px] table-fixed text-sm">
+              <div className="px-4 py-2 border-b border-[#efe9dc] bg-[#fffdf9] flex flex-wrap items-center justify-between gap-2">
+                <p className="text-[11px] text-navy-900/55 font-medium">
+                  Returns: 1Y = absolute return; 3Y &amp; 5Y = CAGR.{latestNavDate ? ` Data as on ${latestNavDate}.` : ''}
+                </p>
+                <p className="text-[11px] text-navy-900/45 italic">Sorting results does not imply any fund is recommended or 'best'.</p>
+              </div>
+              <table className="w-full min-w-[1100px] table-fixed text-sm">
                 <thead className="sticky top-0 z-10">
                   <tr className="bg-gradient-to-r from-navy-900 via-navy-800 to-navy-900 text-white">
-                    <th className="px-4 py-4 w-[3%] text-left rounded-tl-2xl">
+                    <th className="px-3 py-4 w-[3%] text-left rounded-tl-2xl">
                       <span className="text-[11px] font-black text-white/40 uppercase tracking-widest">#</span>
                     </th>
-                    <th className="px-4 py-4 w-[30%] text-left">
+                    <th className="px-3 py-4 w-[30%] text-left">
                       <button onClick={() => toggleSort('name')} className="inline-flex items-center gap-2 group">
                         <span className="text-[12px] font-black uppercase tracking-widest text-white group-hover:text-gold transition-colors">Fund Name</span>
                         <span className="text-[10px] text-white/30 group-hover:text-gold/60 transition-colors">{sortField === 'name' ? (sortOrder === 'asc' ? '▲' : '▼') : '⇅'}</span>
                       </button>
                     </th>
-                    <th className="px-4 py-4 w-[22%] text-left">
+                    <th className="px-3 py-4 w-[22%] text-center">
                       <button onClick={() => toggleSort('category')} className="inline-flex items-center gap-2 group">
                         <span className="text-[12px] font-black uppercase tracking-widest text-white/50 group-hover:text-gold transition-colors">Category</span>
                         <span className="text-[10px] text-white/30 group-hover:text-gold/60 transition-colors">{sortField === 'category' ? (sortOrder === 'asc' ? '▲' : '▼') : '⇅'}</span>
                       </button>
                     </th>
-                    <th className="px-4 py-4 w-[6%] text-left">
+                    <th className="px-3 py-4 w-[7%] text-center">
                       <span className="text-[12px] font-black uppercase tracking-widest text-white/50">Plan</span>
                     </th>
-                    <th className="px-4 py-4 w-[9%] text-center">
+                    <th className="px-3 py-4 w-[9%] text-center">
                       <span className="text-[12px] font-black uppercase tracking-widest text-white block">NAV</span>
-                      <span className="text-[11px] font-semibold normal-case tracking-wide text-gold/70 block">Till {latestNavDate || '—'}</span>
+                      <span className="text-[11px] font-semibold normal-case tracking-wide text-gold/70 block">as on {latestNavDate || '—'}</span>
                     </th>
-                    <th className="px-4 py-4 w-[8%] text-center">
-                      <button onClick={() => toggleSort('cagr1')} className="inline-flex items-center justify-center gap-1.5 w-full group">
-                        <span className="text-[12px] font-black uppercase tracking-widest text-white group-hover:text-gold transition-colors">1Y Return</span>
-                        <span className="text-[10px] text-white/30 group-hover:text-gold/60 transition-colors">{sortField === 'cagr1' ? (sortOrder === 'desc' ? '▼' : '▲') : '⇅'}</span>
-                      </button>
+                    <th className="px-3 py-4 w-[7%] text-center">
+                      <span className="text-[12px] font-black uppercase tracking-widest text-white">1Y Return</span>
                     </th>
-                    <th className="px-4 py-4 w-[8%] text-center">
-                      <button onClick={() => toggleSort('cagr3')} className="inline-flex items-center justify-center gap-1.5 w-full group">
-                        <span className="text-[12px] font-black uppercase tracking-widest text-white group-hover:text-gold transition-colors">3Y CAGR</span>
-                        <span className="text-[10px] text-white/30 group-hover:text-gold/60 transition-colors">{sortField === 'cagr3' ? (sortOrder === 'desc' ? '▼' : '▲') : '⇅'}</span>
-                      </button>
+                    <th className="px-3 py-4 w-[7%] text-center">
+                      <span className="text-[12px] font-black uppercase tracking-widest text-white">3Y CAGR</span>
                     </th>
-                    <th className="px-4 py-4 w-[8%] text-center rounded-tr-2xl">
-                      <span className="text-[12px] font-black uppercase tracking-widest text-white/50">Risk</span>
+                    <th className="px-3 py-4 w-[7%] text-center">
+                      <span className="text-[12px] font-black uppercase tracking-widest text-white">5Y CAGR</span>
+                    </th>
+                    <th className="px-3 py-4 w-[8%] text-center rounded-tr-2xl">
+                      <span className="text-[12px] font-black uppercase tracking-widest text-white/50 block">Risk</span>
                     </th>
                   </tr>
                 </thead>
@@ -967,7 +899,7 @@ const ScreenerView = () => {
                         </button>
                         <p className="text-[12px] text-navy-900/45 mt-0.5">{fund.fund_house}</p>
                       </td>
-                      <td className="px-3 py-4 text-[13px] text-navy-900/60 align-middle leading-snug">{fund.scheme_category || 'NA'}</td>
+                      <td className="px-3 py-4 text-[15px] text-navy-900/60 align-middle leading-snug text-center">{getCategorySub(fund.scheme_category)}</td>
                       <td className="px-3 py-4 text-[13px] align-middle">
                         {/idcw/i.test(fund.scheme_name)
                           ? <span className="px-2 py-0.5 rounded-full bg-purple-50 text-purple-600 font-semibold text-[12px]">IDCW</span>
@@ -977,10 +909,13 @@ const ScreenerView = () => {
                       <td className="px-3 py-4 text-[14px] font-semibold text-navy-900 align-middle text-center">₹{INR.format(Number(fund.latest_nav || 0))}</td>
                       <td className={`px-3 py-4 text-[14px] font-semibold align-middle text-center ${pctClass(fund.cagr_1y)}`}>{formatPct(fund.cagr_1y)}</td>
                       <td className={`px-3 py-4 text-[14px] font-semibold align-middle text-center ${pctClass(fund.cagr_3y)}`}>{formatPct(fund.cagr_3y)}</td>
-                      <td className="px-3 py-4 align-middle">
-                        <div className="inline-flex items-center justify-center gap-1.5 w-full">
-                          <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${getRiskBand(fund.cagr_3y).color}`} />
-                          <span className="text-[13px] font-semibold text-navy-900/70">{getRiskBand(fund.cagr_3y).label}</span>
+                      <td className={`px-3 py-4 text-[14px] font-semibold align-middle text-center ${pctClass(fund.cagr_5y)}`}>{formatPct(fund.cagr_5y)}</td>
+                      <td className="px-3 py-4 align-middle text-center">
+                        <div className="flex flex-col items-center gap-0.5">
+                          <div className="inline-flex items-center justify-center">
+                            <span className="text-[12px] font-semibold text-navy-900/70 leading-tight text-center">{inferRisk(fund)}</span>
+                          </div>
+                          <MiniRiskometer risk={inferRisk(fund)} />
                         </div>
                       </td>
                     </motion.tr>
@@ -1002,6 +937,15 @@ const ScreenerView = () => {
                 </button>
               </div>
             )}
+
+            <div className="px-5 py-4 border-t border-[#efe9dc] bg-[#fffdf9] space-y-1.5 text-[10px] text-navy-900/50 leading-relaxed">
+              <p><span className="font-bold text-navy-900/70">Statutory Disclosures</span> · RupyaNivesh · AMFI-Registered Mutual Fund Distributor · ARN-361484</p>
+              <p>Mutual fund investments are subject to market risks, read all scheme related documents carefully.</p>
+              <p>Past performance may or may not be sustained in the future.</p>
+              <p>This screener is for informational purposes only and does not constitute investment advice or a recommendation to buy/sell any scheme.</p>
+              <p>Returns shown: 1Y = absolute return; 3Y &amp; 5Y = CAGR. For IDCW plans, NAV-based returns reflect reinvestment of distributions at NAV.{latestNavDate ? ` Data as on ${latestNavDate}.` : ''} Risk levels reflect the SEBI Riskometer classification as assigned by the AMC.</p>
+              <p className="italic">Sorting or filtering results does not imply any fund is recommended or 'best'. Investors are advised to consult their financial advisor before making any investment decisions.</p>
+            </div>
           </motion.div>
         </div>
       </div>
@@ -1418,8 +1362,11 @@ const DetailView = ({ schemeCode }) => {
                 </div>
 
                 <div className="mt-5 rounded-xl border border-[#e8dcc5] bg-gradient-to-b from-[#fffdf8] to-[#fdf8ee] p-3.5 space-y-2">
-                  <p className="text-[11px] leading-relaxed text-navy-900/60">Mutual Fund investments are subject to market risks, read all scheme related documents carefully.</p>
-                  <p className="text-[11px] leading-relaxed text-navy-900/60">Past performance may or may not be sustained in future.</p>
+                  <p className="text-[10px] font-bold text-navy-900/60 uppercase tracking-widest">Statutory Disclosures</p>
+                  <p className="text-[11px] leading-relaxed text-navy-900/60">Mutual fund investments are subject to market risks, read all scheme related documents carefully.</p>
+                  <p className="text-[11px] leading-relaxed text-navy-900/60">Past performance may or may not be sustained in the future.</p>
+                  <p className="text-[11px] leading-relaxed text-navy-900/60">This information is for informational purposes only and does not constitute investment advice or a recommendation to buy/sell this scheme.</p>
+                  <p className="text-[11px] leading-relaxed text-navy-900/55">RupyaNivesh · AMFI-Registered Mutual Fund Distributor · ARN-361484. Investments in Regular plans may carry distributor commission.</p>
                 </div>
 
               </div>
@@ -1510,9 +1457,11 @@ const DetailView = ({ schemeCode }) => {
           </div>
           {/* Mobile disclaimer */}
           <div className="md:hidden mt-4 rounded-xl border border-[#e8dcc5] bg-gradient-to-b from-[#fffdf8] to-[#fdf8ee] p-3.5 space-y-2">
-            <p className="text-[11px] leading-relaxed text-navy-900/60">Mutual Fund investments are subject to market risks, read all scheme related documents carefully.</p>
-            <p className="text-[11px] leading-relaxed text-navy-900/60">Past performance may or may not be sustained in future.</p>
-            <p className="text-[11px] leading-relaxed text-navy-900/60">Investments made through RupyaNivesh are under the Regular Plan, under which RupyaNivesh may receive distributor commission.</p>
+            <p className="text-[10px] font-bold text-navy-900/60 uppercase tracking-widest">Statutory Disclosures</p>
+            <p className="text-[11px] leading-relaxed text-navy-900/60">Mutual fund investments are subject to market risks, read all scheme related documents carefully.</p>
+            <p className="text-[11px] leading-relaxed text-navy-900/60">Past performance may or may not be sustained in the future.</p>
+            <p className="text-[11px] leading-relaxed text-navy-900/60">This information is for informational purposes only and does not constitute investment advice or a recommendation to buy/sell this scheme.</p>
+            <p className="text-[11px] leading-relaxed text-navy-900/55">RupyaNivesh · AMFI-Registered Mutual Fund Distributor · ARN-361484. Investments in Regular plans may carry distributor commission.</p>
           </div>
         </div>
       </div>
@@ -1526,3 +1475,9 @@ const ExploreFundsPage = () => {
 };
 
 export default ExploreFundsPage;
+
+
+
+
+
+

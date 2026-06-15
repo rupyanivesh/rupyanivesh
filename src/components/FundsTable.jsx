@@ -57,7 +57,7 @@ const normalize = (v) =>
 
 const UPPERCASE_WORDS = new Set([
   'SBI','HDFC','ICICI','AXIS','DSP','UTI','LIC','IDBI','BOI','HSBC','JM',
-  'PPFAS','ITI','NJ','PGIM','MOSL','ELSS','NFO','ETF','FoF','SIP','NAV',
+  'PPFAS','ITI','NJ','PGIM','MOSL','ELSS','NFO','ETF','FOF','SIP','NAV',
   'AMC','SEBI','MF','US','UK','ESG','IT','PSU','FMCG','CEF','G-SEC',
 ]);
 
@@ -189,6 +189,19 @@ const FundsTable = () => {
   const [indexData, setIndexData] = useState(null);
   const [metricsByCode, setMetricsByCode] = useState({});
 
+  const latestNavDate = useMemo(() => {
+    const funds = Array.isArray(indexData?.funds) ? indexData.funds : [];
+    const dates = funds.map((f) => f.latest_date).filter(Boolean);
+    if (!dates.length) return null;
+    const sorted = dates.slice().sort((a, b) => {
+      const [da, ma, ya] = a.split('-').map(Number);
+      const [db, mb, yb] = b.split('-').map(Number);
+      return new Date(yb, mb - 1, db) - new Date(ya, ma - 1, da);
+    });
+    const [d, m, y] = sorted[0].split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  }, [indexData]);
+
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
@@ -210,17 +223,22 @@ const FundsTable = () => {
     const funds = Array.isArray(indexData?.funds) ? indexData.funds : [];
     const buckets = { Equity: [], Debt: [], ELSS: [], Hybrid: [] };
 
-    const top5 = (pool) =>
-      [...pool]
-        .filter((f) => isGrowthLike(f.scheme_name) && toNum(f.cagr_5y) !== null)
-        .sort((a, b) => {
-          const a5 = toNum(a.cagr_5y) ?? -9999;
-          const b5 = toNum(b.cagr_5y) ?? -9999;
-          if (b5 !== a5) return b5 - a5;
-          const a3 = toNum(a.cagr_3y) ?? -9999;
-          const b3 = toNum(b.cagr_3y) ?? -9999;
-          return b3 - a3;
-        })
+    const onePerSubcat = (pool) => {
+      const eligible = [...pool].filter((f) => isGrowthLike(f.scheme_name) && toNum(f.cagr_5y) !== null);
+      // Group by sub-category, pick the oldest fund (most established) per sub-cat
+      const subMap = new Map();
+      for (const f of eligible) {
+        const sub = categoryShort(f.scheme_category);
+        const existing = subMap.get(sub);
+        const fCode = Number(f.scheme_code);
+        const eCode = existing ? Number(existing.scheme_code) : Infinity;
+        if (!existing || fCode < eCode) {
+          subMap.set(sub, f);
+        }
+      }
+      // Sort sub-cats alphabetically for neutral ordering — no return-based ranking
+      return [...subMap.values()]
+        .sort((a, b) => categoryShort(a.scheme_category).localeCompare(categoryShort(b.scheme_category)))
         .slice(0, 5)
         .map((f) => ({
           name: cleanName(f.scheme_name),
@@ -232,11 +250,12 @@ const FundsTable = () => {
           amc: f.fund_house,
           schemeCode: f.scheme_code,
         }));
+    };
 
-    buckets.ELSS    = top5(funds.filter((f) => isElss(f.scheme_category)));
-    buckets.Equity  = top5(funds.filter((f) => !isElss(f.scheme_category) && String(f.scheme_category).startsWith('Equity Scheme')));
-    buckets.Debt    = top5(funds.filter((f) => String(f.scheme_category).startsWith('Debt Scheme')));
-    buckets.Hybrid  = top5(funds.filter((f) => String(f.scheme_category).startsWith('Hybrid Scheme')));
+    buckets.ELSS    = onePerSubcat(funds.filter((f) => isElss(f.scheme_category)));
+    buckets.Equity  = onePerSubcat(funds.filter((f) => !isElss(f.scheme_category) && String(f.scheme_category).startsWith('Equity Scheme')));
+    buckets.Debt    = onePerSubcat(funds.filter((f) => String(f.scheme_category).startsWith('Debt Scheme')));
+    buckets.Hybrid  = onePerSubcat(funds.filter((f) => String(f.scheme_category).startsWith('Hybrid Scheme')));
 
     return buckets;
   }, [indexData]);
@@ -317,10 +336,19 @@ const FundsTable = () => {
                 <thead className="bg-[#FAF9F6] border-b border-gray-100 text-gray-400 uppercase text-[10px] font-black tracking-[0.2em]">
                   <tr>
                     <th className="sticky left-0 z-30 bg-[#FAF9F6] px-3 lg:px-10 py-6 w-[210px] min-w-[210px] lg:w-auto lg:min-w-0">Scheme Name</th>
-                    <th className="px-3 lg:px-6 py-6 text-center">1YR Returns</th>
-                    <th className="px-3 lg:px-6 py-6 text-center">3Y CAGR</th>
-                    <th className="px-3 lg:px-6 py-6 text-center">5Y CAGR</th>
-                    <th className="px-3 lg:px-10 py-6 text-center">Risk Grade</th>
+                    <th className="px-3 lg:px-6 py-6 text-center">
+                      <span className="block">1YR Returns</span>
+                      {latestNavDate && <span className="block text-[8px] font-semibold normal-case tracking-normal text-gold/70 mt-0.5">as on {latestNavDate}</span>}
+                    </th>
+                    <th className="px-3 lg:px-6 py-6 text-center">
+                      <span className="block">3Y CAGR</span>
+                      {latestNavDate && <span className="block text-[8px] font-semibold normal-case tracking-normal text-gold/70 mt-0.5">as on {latestNavDate}</span>}
+                    </th>
+                    <th className="px-3 lg:px-6 py-6 text-center">
+                      <span className="block">5Y CAGR</span>
+                      {latestNavDate && <span className="block text-[8px] font-semibold normal-case tracking-normal text-gold/70 mt-0.5">as on {latestNavDate}</span>}
+                    </th>
+                    <th className="px-3 lg:px-10 py-6 text-center">Risk<br/><span className="text-[8px] font-semibold normal-case tracking-normal text-gray-400/70">SEBI Riskometer</span></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -407,10 +435,12 @@ const FundsTable = () => {
                   className="lg:hidden overflow-hidden"
                 >
                   <div className="px-5 pb-4 space-y-2 text-gray-500 text-[10px] leading-relaxed">
-                    <p>Mutual Fund investments are subject to market risks. Read all the scheme-related documents carefully before investing.</p>
-                    <p>We facilitate investments in Regular plans of Mutual Fund Schemes only, Direct Plans are not offered.</p>
-                    <p>Returns are historical in nature, past performance may or may not be sustained in the future and is not indicative of future returns.</p>
-                    <p>This information is provided for informational purposes only and does not constitute investment advice or a recommendation.</p>
+                    <p className="font-bold text-navy-900/70">RupyaNivesh · AMFI-Registered Mutual Fund Distributor · ARN-361484</p>
+                    <p>Mutual fund investments are subject to market risks, read all scheme related documents carefully.</p>
+                    <p>Past performance may or may not be sustained in the future.</p>
+                    <p>This screener is for informational purposes only and does not constitute investment advice or a recommendation to buy/sell any scheme.</p>
+                    <p>We facilitate investments in Regular plans only. Returns shown are CAGR for periods &gt;1 year and absolute for ≤1 year, {latestNavDate ? ` Data as on ${latestNavDate}.` : ''}</p>
+                    <p className="italic">Sorting or filtering results does not imply any fund is recommended or 'best'.</p>
                   </div>
                 </motion.div>
               )}
@@ -422,11 +452,13 @@ const FundsTable = () => {
                   <Info size={16} className="text-gold" />
                 </div>
                 <div className="space-y-1.5 flex-1">
-                  <p className="text-[11px] text-navy-900 font-black uppercase tracking-widest mb-2">Statutory disclosures</p>
-                  <p>Mutual Fund investments are subject to market risks. Read all the scheme-related documents carefully before investing.</p>
-                  <p>We facilitate investments in Regular plans of Mutual Fund Schemes only, Direct Plans are not offered.</p>
-                  <p>Returns are historical in nature, past performance may or may not be sustained in the future and is not indicative of future returns.</p>
-                  <p>This information is provided for informational purposes only and does not constitute investment advice or a recommendation. Investors are advised to consult their financial advisor before making any investment decisions.</p>
+                  <p className="text-[11px] text-navy-900 font-black uppercase tracking-widest mb-2">Statutory Disclosures</p>
+                  <p className="font-semibold text-navy-900/70">RupyaNivesh · AMFI-Registered Mutual Fund Distributor · ARN-361484</p>
+                  <p>Mutual fund investments are subject to market risks, read all scheme related documents carefully.</p>
+                  <p>Past performance may or may not be sustained in the future.</p>
+                  <p>This screener is for informational purposes only and does not constitute investment advice or a recommendation to buy/sell any scheme.</p>
+                  <p>We facilitate investments in Regular plans only. Returns shown are CAGR for periods &gt;1 year and absolute for ≤1 year, {latestNavDate ? ` Data as on ${latestNavDate}.` : ''} Risk levels reflect the official SEBI Riskometer as provided by the AMC.</p>
+                  <p className="italic">Sorting or filtering results does not imply any fund is recommended or 'best'. Investors are advised to consult their financial advisor before making any investment decisions.</p>
                 </div>
               </div>
               <Link to="/explore-funds" className="flex items-center gap-3 text-navy-900 font-bold text-[10px] uppercase tracking-[0.2em] group shrink-0 mt-2">

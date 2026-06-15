@@ -71,6 +71,35 @@ const formatCurrency = (val, full = false) => {
   }).format(val);
 };
 
+const numberToWords = (n) => {
+  if (!Number.isFinite(n) || n < 0) return '';
+  if (n === 0) return 'Zero';
+  const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
+    'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+  const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+  const twoDigits = (num) => {
+    if (num < 20) return ones[num];
+    return tens[Math.floor(num / 10)] + (num % 10 ? ' ' + ones[num % 10] : '');
+  };
+  const threeDigits = (num) => {
+    if (num === 0) return '';
+    if (num < 100) return twoDigits(num);
+    return ones[Math.floor(num / 100)] + ' Hundred' + (num % 100 ? ' ' + twoDigits(num % 100) : '');
+  };
+  const num = Math.round(n);
+  const crore = Math.floor(num / 10000000);
+  const lakh = Math.floor((num % 10000000) / 100000);
+  const thousand = Math.floor((num % 100000) / 1000);
+  const rest = num % 1000;
+  const parts = [];
+  if (crore) parts.push(threeDigits(crore) + ' Crore' + (crore > 1 ? 's' : ''));
+  if (lakh) parts.push(threeDigits(lakh) + ' Lakh' + (lakh > 1 ? 's' : ''));
+  if (thousand) parts.push(threeDigits(thousand) + ' Thousand');
+  if (rest) parts.push(threeDigits(rest));
+  const result = parts.join(' ');
+  return result.charAt(0).toUpperCase() + result.slice(1);
+};
+
 const GrowthChart = ({
   data = [],
   chartType = 'Bar',
@@ -152,12 +181,14 @@ const GrowthChart = ({
       legend: {
         position: 'top',
         align: 'end',
-        labels: { 
-          usePointStyle: true, 
-          boxWidth: 6, 
-          color: '#64748B', 
+        labels: {
+          usePointStyle: true,
+          boxWidth: 6,
+          boxHeight: 6,
+          color: '#64748B',
           font: { size: 11, weight: '600' },
-          padding: 15
+          padding: 20,
+          pointStyleWidth: 10
         }
       },
       tooltip: {
@@ -181,20 +212,20 @@ const GrowthChart = ({
         stacked: isBar,
         beginAtZero: true,
         grid: { color: 'rgba(0, 0, 0, 0.04)', drawBorder: false },
-        ticks: { 
-          color: '#94A3B8', 
-          font: { size: 10, weight: '600' }, 
-          callback: (v) => formatCurrency(v).replace(INR_SYMBOL, '').trim() 
+        ticks: {
+          color: '#94A3B8',
+          font: { size: 12, weight: '600' },
+          callback: (v) => formatCurrency(v).replace(INR_SYMBOL, '').trim()
         }
       },
       x: {
         stacked: isBar,
         grid: { display: false },
-        ticks: { 
-          color: '#94A3B8', 
-          font: { size: 10, weight: '600' }, 
-          autoSkip: true, 
-          maxTicksLimit: 12 
+        ticks: {
+          color: '#94A3B8',
+          font: { size: 12, weight: '600' },
+          autoSkip: true,
+          maxTicksLimit: 12
         }
       }
     }
@@ -484,32 +515,59 @@ const CalculatorInput = ({ label, value, min, max, step, unit, onChange, isCurre
 
   return (
     <div className="bg-gray-50 border border-gray-100 rounded-[20px] p-4 space-y-2 group transition-all hover:bg-white hover:border-gold/20 hover:shadow-sm">
-      <label className="text-[9px] font-black uppercase tracking-[2px] text-gray-400 group-hover:text-gold transition-colors">{label}</label>
+      <label className="text-sm font-semibold text-gray-500 group-hover:text-gold transition-colors">{label}</label>
       <div className="relative">
         {unit === INR_SYMBOL && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-navy-900/40 font-sans font-bold text-sm">{INR_SYMBOL}</span>}
-        <input
-          type="text"
-          inputMode={isCurrency ? 'numeric' : 'decimal'}
-          value={displayValue}
-          onChange={handleChange}
-          onFocus={() => setIsEditing(true)}
-          onBlur={() => {
-            setIsEditing(false);
-            commitDraft();
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              commitDraft();
+        {unit === '%' ? (
+          <div className="relative bg-white border border-gray-50 rounded-xl shadow-sm px-4 py-2 focus-within:border-gold/30 transition-all">
+            <span className="invisible whitespace-pre font-sans font-black text-base lg:text-lg">{displayValue}</span>
+            <span className="text-navy-900 font-sans font-black text-base lg:text-lg">%</span>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={displayValue}
+              onChange={handleChange}
+              onFocus={() => setIsEditing(true)}
+              onBlur={() => { setIsEditing(false); commitDraft(); }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  commitDraft();
+                  setIsEditing(false);
+                  const inputs = Array.from(document.querySelectorAll('input[type="text"], input[type="number"]'));
+                  const idx = inputs.indexOf(e.currentTarget);
+                  if (idx >= 0 && idx < inputs.length - 1) inputs[idx + 1].focus();
+                  else e.currentTarget.blur();
+                }
+              }}
+              className="absolute inset-0 bg-transparent outline-none text-navy-900 font-sans font-black text-base lg:text-lg px-4 py-2 w-full"
+            />
+          </div>
+        ) : (
+          <input
+            type="text"
+            inputMode={isCurrency ? 'numeric' : 'decimal'}
+            value={displayValue}
+            onChange={handleChange}
+            onFocus={() => setIsEditing(true)}
+            onBlur={() => {
               setIsEditing(false);
-              const inputs = Array.from(document.querySelectorAll('input[type="text"], input[type="number"]'));
-              const idx = inputs.indexOf(e.currentTarget);
-              if (idx >= 0 && idx < inputs.length - 1) inputs[idx + 1].focus();
-              else e.currentTarget.blur();
-            }
-          }}
-          className={`w-full bg-white border border-gray-50 rounded-xl py-2 ${unit === INR_SYMBOL ? 'pl-8' : 'px-4'} pr-4 text-navy-900 font-sans font-black text-base lg:text-lg outline-none focus:border-gold/30 transition-all shadow-sm`}
-        />
+              commitDraft();
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                commitDraft();
+                setIsEditing(false);
+                const inputs = Array.from(document.querySelectorAll('input[type="text"], input[type="number"]'));
+                const idx = inputs.indexOf(e.currentTarget);
+                if (idx >= 0 && idx < inputs.length - 1) inputs[idx + 1].focus();
+                else e.currentTarget.blur();
+              }
+            }}
+            className={`w-full bg-white border border-gray-50 rounded-xl py-2 ${unit === INR_SYMBOL ? 'pl-8' : 'px-4'} pr-4 text-navy-900 font-sans font-black text-base lg:text-lg outline-none focus:border-gold/30 transition-all shadow-sm`}
+          />
+        )}
       </div>
       <div className="relative h-1.5 flex items-center pt-1">
         <div className="absolute w-full h-1 bg-gray-100 rounded-full" />
@@ -523,10 +581,8 @@ const CalculatorInput = ({ label, value, min, max, step, unit, onChange, isCurre
           className="absolute w-full h-1 bg-transparent appearance-none cursor-pointer accent-gold z-10"
         />
       </div>
-      {(Number.isFinite(min) || Number.isFinite(max)) && (
-        <p className="text-[10px] text-navy-900/50">
-          Min: {formatRangeValue(min)} | Max: {formatRangeValue(max)}
-        </p>
+      {isCurrency && value > 0 && (
+        <p className="text-sm italic font-medium text-emerald-600 mt-1 tracking-wider">{numberToWords(value)}</p>
       )}
     </div>
   );
@@ -586,7 +642,7 @@ const SIPCalculator = () => {
               <button
                 key={f}
                 onClick={() => setFrequency(f)}
-                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${frequency === f ? 'bg-white text-emerald-600 shadow-sm' : 'text-gray-400 hover:text-navy-900'}`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${frequency === f ? 'bg-white text-emerald-600 shadow-sm' : 'text-gray-400 hover:text-navy-900'}`}
               >
                 {f}
               </button>
@@ -614,15 +670,15 @@ const SIPCalculator = () => {
         <div className="lg:hidden mt-4">
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-white rounded-xl p-2 border border-gray-100 shadow-sm transition-all text-center">
-              <div className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 leading-none">Invested</div>
+              <div className="text-xs font-semibold text-gray-400 mb-1 leading-none">Invested</div>
               <div className="text-[12px] font-sans font-black text-navy-900/80">{formatCurrency(result.invested)}</div>
             </div>
             <div className="bg-white rounded-xl p-2 border border-gray-100 shadow-sm transition-all text-center">
-              <div className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 leading-none">Est. Returns</div>
+              <div className="text-xs font-semibold text-gray-400 mb-1 leading-none">Est. Returns</div>
               <div className="text-[12px] font-sans font-black text-[#00C896]">{formatCurrency(result.gains)}</div>
             </div>
             <div className="bg-white rounded-xl p-2 border border-navy-900/5 shadow-inner transition-all text-center bg-gray-50/10">
-              <div className="text-[9px] font-black uppercase tracking-widest text-navy-900/40 mb-1 leading-none">Total Value</div>
+              <div className="text-xs font-semibold text-navy-900/40 mb-1 leading-none">Total Value</div>
               <div className="text-[14px] font-sans font-black text-navy-900">{formatCurrency(result.total)}</div>
             </div>
           </div>
@@ -635,7 +691,7 @@ const SIPCalculator = () => {
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <div className="space-y-2 flex-1">
-              <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-1">
+              <div className="flex justify-between items-center text-xs font-semibold text-gray-400 mb-1">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-sm bg-navy-700" />
                   <span>Invested <span className="text-navy-900 ml-1">{investedPct}%</span></span>
@@ -656,15 +712,15 @@ const SIPCalculator = () => {
               <div className="bg-white rounded-lg shadow-sm border border-gray-100 flex p-1">
                 <button
                   onClick={() => setViewMode('chart')}
-                  className={`p-1.5 rounded-md transition-all ${viewMode === 'chart' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-400 hover:bg-gray-50'}`}
+                  className={`p-2 rounded-lg transition-all ${viewMode === 'chart' ? 'bg-gold text-white shadow-sm' : 'bg-amber-50 text-amber-500 hover:bg-amber-100'}`}
                 >
-                  <TrendingUpDown size={14} />
+                  <TrendingUpDown size={18} />
                 </button>
                 <button
                   onClick={() => setViewMode('table')}
-                  className={`p-1.5 rounded-md transition-all ${viewMode === 'table' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-400 hover:bg-gray-50'}`}
+                  className={`p-2 rounded-lg transition-all ${viewMode === 'table' ? 'bg-gold text-white shadow-sm' : 'bg-amber-50 text-amber-500 hover:bg-amber-100'}`}
                 >
-                  <CalendarDays size={14} />
+                  <CalendarDays size={18} />
                 </button>
               </div>
             </div>
@@ -679,12 +735,12 @@ const SIPCalculator = () => {
                 exit={{ opacity: 0, x: -20 }}
                 className="flex items-center gap-2 bg-white/60 p-1.5 rounded-xl border border-gray-100 w-fit"
               >
-                <span className="text-[10px] font-bold text-navy-900/40 px-2 uppercase tracking-tighter">Charts:</span>
+                <span className="text-sm font-semibold text-gray-500 px-2">Charts:</span>
                 {['Bar', 'Area'].map(type => (
                   <button
                     key={type}
                     onClick={() => setChartType(type)}
-                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap ${chartType === type ? 'bg-white text-emerald-600 shadow-sm border border-emerald-50' : 'text-gray-400 hover:text-navy-900 border border-transparent'}`}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${chartType === type ? 'bg-white text-emerald-600 shadow-sm border border-emerald-50' : 'text-gray-400 hover:text-navy-900 border border-transparent'}`}
                   >
                     {type}
                   </button>
@@ -709,15 +765,15 @@ const SIPCalculator = () => {
 
         <div className="hidden lg:grid grid-cols-3 gap-3">
           <div className="bg-white rounded-xl p-2 lg:p-3 border border-gray-100 shadow-sm transition-all text-center">
-            <div className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 leading-none">Invested</div>
+            <div className="text-xs font-semibold text-gray-400 mb-1 leading-none">Invested</div>
             <div className="text-sm lg:text-lg font-sans font-black text-navy-900/80">{formatCurrency(result.invested)}</div>
           </div>
           <div className="bg-white rounded-xl p-2 lg:p-3 border border-gray-100 shadow-sm transition-all text-center">
-            <div className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 leading-none">Est. Returns</div>
+            <div className="text-xs font-semibold text-gray-400 mb-1 leading-none">Est. Returns</div>
             <div className="text-sm lg:text-lg font-sans font-black text-[#00C896]">{formatCurrency(result.gains)}</div>
           </div>
           <div className="bg-white rounded-xl p-2 lg:p-3 border border-navy-900/5 shadow-inner transition-all text-center bg-gray-50/10">
-            <div className="text-[9px] font-black uppercase tracking-widest text-navy-900/40 mb-1 leading-none">Total Value</div>
+            <div className="text-xs font-semibold text-navy-900/40 mb-1 leading-none">Total Value</div>
             <div className="text-lg lg:text-2xl font-sans font-black text-navy-900 whitespace-nowrap">{formatCurrency(result.total, true)}</div>
           </div>
         </div>
@@ -786,15 +842,15 @@ const LumpsumCalculator = () => {
         <div className="lg:hidden mt-4">
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-white rounded-xl p-2 border border-gray-100 shadow-sm transition-all text-center">
-              <div className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 leading-none">Principal</div>
+              <div className="text-xs font-semibold text-gray-400 mb-1 leading-none">Principal</div>
               <div className="text-[12px] font-sans font-black text-navy-900/80">{formatCurrency(result.invested)}</div>
             </div>
             <div className="bg-white rounded-xl p-2 border border-gray-100 shadow-sm transition-all text-center">
-              <div className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 leading-none">Est. Gains</div>
+              <div className="text-xs font-semibold text-gray-400 mb-1 leading-none">Est. Gains</div>
               <div className="text-[12px] font-sans font-black text-[#00C896]">{formatCurrency(result.gains)}</div>
             </div>
             <div className="bg-white rounded-xl p-2 border border-navy-900/5 shadow-inner transition-all text-center bg-gray-50/10">
-              <div className="text-[9px] font-black uppercase tracking-widest text-navy-900/40 mb-1 leading-none">Future Value</div>
+              <div className="text-xs font-semibold text-navy-900/40 mb-1 leading-none">Future Value</div>
               <div className="text-[14px] font-sans font-black text-navy-900">{formatCurrency(result.total)}</div>
             </div>
           </div>
@@ -807,7 +863,7 @@ const LumpsumCalculator = () => {
         <div className="space-y-4">
           <div className="flex justify-between items-start xl:items-center flex-col xl:flex-row gap-4">
             <div className="space-y-2 w-full xl:flex-1">
-              <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-widest text-gray-400">
+              <div className="flex justify-between items-center text-xs font-semibold text-gray-400">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-sm bg-navy-700" />
                   <span>Principal <span className="text-navy-900 ml-1">{investedPct}%</span></span>
@@ -827,15 +883,15 @@ const LumpsumCalculator = () => {
               <div className="bg-white rounded-lg shadow-sm border border-gray-100 flex p-1">
                 <button
                   onClick={() => setViewMode('chart')}
-                  className={`p-1.5 rounded-md transition-all ${viewMode === 'chart' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-400 hover:bg-gray-50'}`}
+                  className={`p-2 rounded-lg transition-all ${viewMode === 'chart' ? 'bg-gold text-white shadow-sm' : 'bg-amber-50 text-amber-500 hover:bg-amber-100'}`}
                 >
-                  <TrendingUpDown size={14} />
+                  <TrendingUpDown size={18} />
                 </button>
                 <button
                   onClick={() => setViewMode('table')}
-                  className={`p-1.5 rounded-md transition-all ${viewMode === 'table' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-400 hover:bg-gray-50'}`}
+                  className={`p-2 rounded-lg transition-all ${viewMode === 'table' ? 'bg-gold text-white shadow-sm' : 'bg-amber-50 text-amber-500 hover:bg-amber-100'}`}
                 >
-                  <CalendarDays size={14} />
+                  <CalendarDays size={18} />
                 </button>
               </div>
             </div>
@@ -850,12 +906,12 @@ const LumpsumCalculator = () => {
                 exit={{ opacity: 0, x: -20 }}
                 className="flex items-center gap-2 bg-white/60 p-1.5 rounded-xl border border-gray-100 w-fit overflow-x-auto min-w-min"
               >
-                <span className="text-[10px] font-bold text-navy-900/40 px-2 uppercase tracking-tighter hidden sm:inline">Charts:</span>
+                <span className="text-sm font-semibold text-gray-500 px-2 hidden sm:inline">Charts:</span>
                 {['Bar', 'Area'].map(type => (
                   <button
                     key={type}
                     onClick={() => setChartType(type)}
-                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap ${chartType === type ? 'bg-white text-emerald-600 shadow-sm border border-emerald-50' : 'text-gray-400 hover:text-navy-900 border border-transparent'}`}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${chartType === type ? 'bg-white text-emerald-600 shadow-sm border border-emerald-50' : 'text-gray-400 hover:text-navy-900 border border-transparent'}`}
                   >
                     {type}
                   </button>
@@ -883,15 +939,15 @@ const LumpsumCalculator = () => {
 
         <div className="hidden lg:grid grid-cols-3 gap-3">
           <div className="bg-white rounded-xl p-2 lg:p-3 border border-gray-100 shadow-sm transition-all text-center">
-            <div className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 leading-none">Principal</div>
+            <div className="text-xs font-semibold text-gray-400 mb-1 leading-none">Principal</div>
             <div className="text-sm lg:text-lg font-sans font-black text-navy-900/80">{formatCurrency(result.invested)}</div>
           </div>
           <div className="bg-white rounded-xl p-2 lg:p-3 border border-gray-100 shadow-sm transition-all text-center">
-            <div className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 leading-none">Est. Gains</div>
+            <div className="text-xs font-semibold text-gray-400 mb-1 leading-none">Est. Gains</div>
             <div className="text-sm lg:text-lg font-sans font-black text-[#00C896]">{formatCurrency(result.gains)}</div>
           </div>
           <div className="bg-white rounded-xl p-2 lg:p-3 border border-navy-900/5 shadow-inner transition-all text-center bg-gray-50/10">
-            <div className="text-[9px] font-black uppercase tracking-widest text-navy-900/40 mb-1 leading-none">Future Value</div>
+            <div className="text-xs font-semibold text-navy-900/40 mb-1 leading-none">Future Value</div>
             <div className="text-lg lg:text-2xl font-sans font-black text-navy-900 whitespace-nowrap">{formatCurrency(result.total, true)}</div>
           </div>
         </div>
@@ -974,15 +1030,15 @@ const RetirementCalculator = () => {
         <div className="lg:hidden mt-4">
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-white rounded-xl p-2 border border-gray-100 shadow-sm transition-all text-center">
-              <div className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 leading-none">Savings</div>
+              <div className="text-xs font-semibold text-gray-400 mb-1 leading-none">Savings</div>
               <div className="text-[12px] font-sans font-black text-navy-900/80">{formatCurrency(result.invested)}</div>
             </div>
             <div className="bg-white rounded-xl p-2 border border-gray-100 shadow-sm transition-all text-center">
-              <div className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 leading-none">Monthly Income</div>
+              <div className="text-xs font-semibold text-gray-400 mb-1 leading-none">Monthly Income</div>
               <div className="text-[12px] font-sans font-black text-[#00C896]">{formatCurrency(result.total / 300)}</div>
             </div>
             <div className="bg-white rounded-xl p-2 border border-navy-900/5 shadow-inner transition-all text-center bg-gray-50/10">
-              <div className="text-[9px] font-black uppercase tracking-widest text-navy-900/40 mb-1 leading-none">Total Corpus</div>
+              <div className="text-xs font-semibold text-navy-900/40 mb-1 leading-none">Total Corpus</div>
               <div className="text-[14px] font-sans font-black text-navy-900">{formatCurrency(result.total)}</div>
             </div>
           </div>
@@ -995,7 +1051,7 @@ const RetirementCalculator = () => {
         <div className="space-y-4">
           <div className="flex justify-between items-start xl:items-center flex-col xl:flex-row gap-4">
             <div className="space-y-2 w-full xl:flex-1">
-              <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-widest text-gray-400">
+              <div className="flex justify-between items-center text-xs font-semibold text-gray-400">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-sm bg-navy-700" />
                   <span>Savings <span className="text-navy-900 ml-1">{investedPct}%</span></span>
@@ -1015,15 +1071,15 @@ const RetirementCalculator = () => {
               <div className="bg-white rounded-lg shadow-sm border border-gray-100 flex p-1">
                 <button
                   onClick={() => setViewMode('chart')}
-                  className={`p-1.5 rounded-md transition-all ${viewMode === 'chart' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-400 hover:bg-gray-50'}`}
+                  className={`p-2 rounded-lg transition-all ${viewMode === 'chart' ? 'bg-gold text-white shadow-sm' : 'bg-amber-50 text-amber-500 hover:bg-amber-100'}`}
                 >
-                  <TrendingUpDown size={14} />
+                  <TrendingUpDown size={18} />
                 </button>
                 <button
                   onClick={() => setViewMode('table')}
-                  className={`p-1.5 rounded-md transition-all ${viewMode === 'table' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-400 hover:bg-gray-50'}`}
+                  className={`p-2 rounded-lg transition-all ${viewMode === 'table' ? 'bg-gold text-white shadow-sm' : 'bg-amber-50 text-amber-500 hover:bg-amber-100'}`}
                 >
-                  <CalendarDays size={14} />
+                  <CalendarDays size={18} />
                 </button>
               </div>
             </div>
@@ -1038,12 +1094,12 @@ const RetirementCalculator = () => {
                 exit={{ opacity: 0, x: -20 }}
                 className="flex items-center gap-2 bg-white/60 p-1.5 rounded-xl border border-gray-100 w-fit overflow-x-auto min-w-min"
               >
-                <span className="text-[10px] font-bold text-navy-900/40 px-2 uppercase tracking-tighter hidden sm:inline">Charts:</span>
+                <span className="text-sm font-semibold text-gray-500 px-2 hidden sm:inline">Charts:</span>
                 {['Bar', 'Area'].map(type => (
                   <button
                     key={type}
                     onClick={() => setChartType(type)}
-                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap ${chartType === type ? 'bg-white text-emerald-600 shadow-sm border border-emerald-50' : 'text-gray-400 hover:text-navy-900 border border-transparent'}`}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${chartType === type ? 'bg-white text-emerald-600 shadow-sm border border-emerald-50' : 'text-gray-400 hover:text-navy-900 border border-transparent'}`}
                   >
                     {type}
                   </button>
@@ -1071,15 +1127,15 @@ const RetirementCalculator = () => {
 
         <div className="hidden lg:grid grid-cols-3 gap-3">
           <div className="bg-white rounded-xl p-2 lg:p-3 border border-gray-100 shadow-sm transition-all text-center">
-            <div className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 leading-none">Savings</div>
+            <div className="text-xs font-semibold text-gray-400 mb-1 leading-none">Savings</div>
             <div className="text-sm lg:text-lg font-sans font-black text-navy-900/80">{formatCurrency(result.invested)}</div>
           </div>
           <div className="bg-white rounded-xl p-2 lg:p-3 border border-gray-100 shadow-sm transition-all text-center">
-            <div className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 leading-none">Monthly Income</div>
+            <div className="text-xs font-semibold text-gray-400 mb-1 leading-none">Monthly Income</div>
             <div className="text-sm lg:text-lg font-sans font-black text-[#00C896]">{formatCurrency(result.total / 300)}</div>
           </div>
           <div className="bg-white rounded-xl p-2 lg:p-3 border border-navy-900/5 shadow-inner transition-all text-center bg-gray-50/10">
-            <div className="text-[9px] font-black uppercase tracking-widest text-navy-900/40 mb-1 leading-none">Total Corpus</div>
+            <div className="text-xs font-semibold text-navy-900/40 mb-1 leading-none">Total Corpus</div>
             <div className="text-lg lg:text-2xl font-sans font-black text-navy-900 whitespace-nowrap">{formatCurrency(result.total, true)}</div>
           </div>
         </div>
@@ -1124,7 +1180,7 @@ const InflationTracker = () => {
       {/* Left: Inputs */}
       <div className="lg:w-[45%] p-6 lg:p-8 space-y-6 border-r border-gray-50 flex flex-col">
         <div>
-          <h3 className="text-xl font-sans font-black text-navy-900">Inflation Tracker</h3>
+          <h3 className="text-xl font-sans font-black text-navy-900">Inflation Calculator</h3>
         </div>
         <div className="space-y-4 flex-1">
           <CalculatorInput
@@ -1146,15 +1202,15 @@ const InflationTracker = () => {
         <div className="lg:hidden mt-4">
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-white rounded-xl p-2 border border-gray-100 shadow-sm transition-all text-center">
-              <div className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 leading-none">Today</div>
+              <div className="text-xs font-semibold text-gray-400 mb-1 leading-none">Today</div>
               <div className="text-[12px] font-sans font-black text-navy-900/80">{formatCurrency(result.present)}</div>
             </div>
             <div className="bg-white rounded-xl p-2 border border-gray-100 shadow-sm transition-all text-center">
-              <div className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 leading-none">Added Cost</div>
+              <div className="text-xs font-semibold text-gray-400 mb-1 leading-none">Added Cost</div>
               <div className="text-[12px] font-sans font-black text-red-500">{formatCurrency(result.increase)}</div>
             </div>
             <div className="bg-white rounded-xl p-2 border border-navy-900/5 shadow-inner transition-all text-center bg-gray-50/10">
-              <div className="text-[9px] font-black uppercase tracking-widest text-navy-900/40 mb-1 leading-none">Future Cost</div>
+              <div className="text-xs font-semibold text-navy-900/40 mb-1 leading-none">Future Cost</div>
               <div className="text-[14px] font-sans font-black text-navy-900">{formatCurrency(result.future)}</div>
             </div>
           </div>
@@ -1167,7 +1223,7 @@ const InflationTracker = () => {
         <div className="space-y-4">
           <div className="flex justify-between items-start xl:items-center flex-col xl:flex-row gap-4">
             <div className="space-y-2 w-full xl:flex-1">
-              <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-widest text-gray-400">
+              <div className="flex justify-between items-center text-xs font-semibold text-gray-400">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-sm bg-navy-700" />
                   <span>Base Cost <span className="text-navy-900 ml-1">{presentPct}%</span></span>
@@ -1187,15 +1243,15 @@ const InflationTracker = () => {
               <div className="bg-white rounded-lg shadow-sm border border-gray-100 flex p-1">
                 <button
                   onClick={() => setViewMode('chart')}
-                  className={`p-1.5 rounded-md transition-all ${viewMode === 'chart' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-400 hover:bg-gray-50'}`}
+                  className={`p-2 rounded-lg transition-all ${viewMode === 'chart' ? 'bg-gold text-white shadow-sm' : 'bg-amber-50 text-amber-500 hover:bg-amber-100'}`}
                 >
-                  <TrendingUpDown size={14} />
+                  <TrendingUpDown size={18} />
                 </button>
                 <button
                   onClick={() => setViewMode('table')}
-                  className={`p-1.5 rounded-md transition-all ${viewMode === 'table' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-400 hover:bg-gray-50'}`}
+                  className={`p-2 rounded-lg transition-all ${viewMode === 'table' ? 'bg-gold text-white shadow-sm' : 'bg-amber-50 text-amber-500 hover:bg-amber-100'}`}
                 >
-                  <CalendarDays size={14} />
+                  <CalendarDays size={18} />
                 </button>
               </div>
             </div>
@@ -1210,12 +1266,12 @@ const InflationTracker = () => {
                 exit={{ opacity: 0, x: -20 }}
                 className="flex items-center gap-2 bg-white/60 p-1.5 rounded-xl border border-gray-100 w-fit overflow-x-auto min-w-min"
               >
-                <span className="text-[10px] font-bold text-navy-900/40 px-2 uppercase tracking-tighter hidden sm:inline">Charts:</span>
+                <span className="text-sm font-semibold text-gray-500 px-2 hidden sm:inline">Charts:</span>
                 {['Bar', 'Area'].map(type => (
                   <button
                     key={type}
                     onClick={() => setChartType(type)}
-                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap ${chartType === type ? 'bg-white text-emerald-600 shadow-sm border border-emerald-50' : 'text-gray-400 hover:text-navy-900 border border-transparent'}`}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${chartType === type ? 'bg-white text-emerald-600 shadow-sm border border-emerald-50' : 'text-gray-400 hover:text-navy-900 border border-transparent'}`}
                   >
                     {type}
                   </button>
@@ -1245,15 +1301,15 @@ const InflationTracker = () => {
 
         <div className="hidden lg:grid grid-cols-3 gap-3">
           <div className="bg-white rounded-xl p-2 lg:p-3 border border-gray-100 shadow-sm transition-all text-center">
-            <div className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 leading-none">Today</div>
+            <div className="text-xs font-semibold text-gray-400 mb-1 leading-none">Today</div>
             <div className="text-sm lg:text-lg font-sans font-black text-navy-900/80">{formatCurrency(result.present)}</div>
           </div>
           <div className="bg-white rounded-xl p-2 lg:p-3 border border-gray-100 shadow-sm transition-all text-center">
-            <div className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 leading-none">Added Cost</div>
+            <div className="text-xs font-semibold text-gray-400 mb-1 leading-none">Added Cost</div>
             <div className="text-sm lg:text-lg font-sans font-black text-red-500">{formatCurrency(result.increase)}</div>
           </div>
           <div className="bg-white rounded-xl p-2 lg:p-3 border border-navy-900/5 shadow-inner transition-all text-center bg-gray-50/10">
-            <div className="text-[9px] font-black uppercase tracking-widest text-navy-900/40 mb-1 leading-none">Future Cost</div>
+            <div className="text-xs font-semibold text-navy-900/40 mb-1 leading-none">Future Cost</div>
             <div className="text-lg lg:text-2xl font-sans font-black text-navy-900 whitespace-nowrap">{formatCurrency(result.future, true)}</div>
           </div>
         </div>
@@ -1327,15 +1383,15 @@ const EducationGoal = () => {
         <div className="lg:hidden mt-4">
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-white rounded-xl p-2 border border-gray-100 shadow-sm transition-all text-center">
-              <div className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 leading-none">Savings</div>
+              <div className="text-xs font-semibold text-gray-400 mb-1 leading-none">Savings</div>
               <div className="text-[12px] font-sans font-black text-navy-900/80">{formatCurrency(invested)}</div>
             </div>
             <div className="bg-white rounded-xl p-2 border border-gray-100 shadow-sm transition-all text-center">
-              <div className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 leading-none">Est. Gains</div>
+              <div className="text-xs font-semibold text-gray-400 mb-1 leading-none">Est. Gains</div>
               <div className="text-[12px] font-sans font-black text-[#00C896]">{formatCurrency(gains)}</div>
             </div>
             <div className="bg-white rounded-xl p-2 border border-navy-900/5 shadow-inner transition-all text-center bg-gray-50/10">
-              <div className="text-[9px] font-black uppercase tracking-widest text-navy-900/40 mb-1 leading-none">Goal Fund</div>
+              <div className="text-xs font-semibold text-navy-900/40 mb-1 leading-none">Goal Fund</div>
               <div className="text-[14px] font-sans font-black text-navy-900">{formatCurrency(target)}</div>
             </div>
           </div>
@@ -1348,7 +1404,7 @@ const EducationGoal = () => {
         <div className="space-y-4">
           <div className="flex justify-between items-start xl:items-center flex-col xl:flex-row gap-4">
             <div className="space-y-2 w-full xl:flex-1">
-              <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-widest text-gray-400">
+              <div className="flex justify-between items-center text-xs font-semibold text-gray-400">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-sm bg-navy-700" />
                   <span>Savings <span className="text-navy-900 ml-1">{investedPct}%</span></span>
@@ -1368,15 +1424,15 @@ const EducationGoal = () => {
               <div className="bg-white rounded-lg shadow-sm border border-gray-100 flex p-1">
                 <button
                   onClick={() => setViewMode('chart')}
-                  className={`p-1.5 rounded-md transition-all ${viewMode === 'chart' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-400 hover:bg-gray-50'}`}
+                  className={`p-2 rounded-lg transition-all ${viewMode === 'chart' ? 'bg-gold text-white shadow-sm' : 'bg-amber-50 text-amber-500 hover:bg-amber-100'}`}
                 >
-                  <TrendingUpDown size={14} />
+                  <TrendingUpDown size={18} />
                 </button>
                 <button
                   onClick={() => setViewMode('table')}
-                  className={`p-1.5 rounded-md transition-all ${viewMode === 'table' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-400 hover:bg-gray-50'}`}
+                  className={`p-2 rounded-lg transition-all ${viewMode === 'table' ? 'bg-gold text-white shadow-sm' : 'bg-amber-50 text-amber-500 hover:bg-amber-100'}`}
                 >
-                  <CalendarDays size={14} />
+                  <CalendarDays size={18} />
                 </button>
               </div>
             </div>
@@ -1391,12 +1447,12 @@ const EducationGoal = () => {
                 exit={{ opacity: 0, x: -20 }}
                 className="flex items-center gap-2 bg-white/60 p-1.5 rounded-xl border border-gray-100 w-fit overflow-x-auto min-w-min"
               >
-                <span className="text-[10px] font-bold text-navy-900/40 px-2 uppercase tracking-tighter hidden sm:inline">Charts:</span>
+                <span className="text-sm font-semibold text-gray-500 px-2 hidden sm:inline">Charts:</span>
                 {['Bar', 'Area'].map(type => (
                   <button
                     key={type}
                     onClick={() => setChartType(type)}
-                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap ${chartType === type ? 'bg-white text-emerald-600 shadow-sm border border-emerald-50' : 'text-gray-400 hover:text-navy-900 border border-transparent'}`}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${chartType === type ? 'bg-white text-emerald-600 shadow-sm border border-emerald-50' : 'text-gray-400 hover:text-navy-900 border border-transparent'}`}
                   >
                     {type}
                   </button>
@@ -1424,15 +1480,15 @@ const EducationGoal = () => {
 
         <div className="hidden lg:grid grid-cols-3 gap-3">
           <div className="bg-white rounded-xl p-2 lg:p-3 border border-gray-100 shadow-sm transition-all text-center">
-            <div className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 leading-none">Savings</div>
+            <div className="text-xs font-semibold text-gray-400 mb-1 leading-none">Savings</div>
             <div className="text-sm lg:text-lg font-sans font-black text-navy-900/80">{formatCurrency(invested)}</div>
           </div>
           <div className="bg-white rounded-xl p-2 lg:p-3 border border-gray-100 shadow-sm transition-all text-center">
-            <div className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1 leading-none">Est. Gains</div>
+            <div className="text-xs font-semibold text-gray-400 mb-1 leading-none">Est. Gains</div>
             <div className="text-sm lg:text-lg font-sans font-black text-[#00C896]">{formatCurrency(gains)}</div>
           </div>
           <div className="bg-white rounded-xl p-2 lg:p-3 border border-navy-900/5 shadow-inner transition-all text-center bg-gray-50/10">
-            <div className="text-[9px] font-black uppercase tracking-widest text-navy-900/40 mb-1 leading-none">Goal Fund</div>
+            <div className="text-xs font-semibold text-navy-900/40 mb-1 leading-none">Goal Fund</div>
             <div className="text-lg lg:text-2xl font-sans font-black text-navy-900 whitespace-nowrap">{formatCurrency(target, true)}</div>
           </div>
         </div>
@@ -2450,6 +2506,8 @@ const Calculators = () => {
   );
 };
 export default Calculators;
+
+
 
 
 

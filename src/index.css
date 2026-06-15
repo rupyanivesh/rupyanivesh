@@ -5,9 +5,13 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
   body {
     /* Using a soft Ivory / Off-white as global background */
     @apply font-sans text-navy-900 bg-[#FAF9F6] antialiased;
+    -webkit-overflow-scrolling: touch;
   }
   
   h1, h2, h3, h4, h5, h6 {
