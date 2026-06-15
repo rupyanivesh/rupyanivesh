@@ -314,7 +314,7 @@ const LeadForm = ({ title }) => {
       <div className="absolute top-0 right-0 w-32 h-32 bg-gold/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
 
       <h4 className="text-2xl font-serif font-black text-white mb-2 relative z-10">{title}</h4>
-      <p className="text-navy-200 text-xs mb-8 relative z-10">Book a consultation session with our experts.</p>
+      <p className="text-navy-200 text-xs mb-8 relative z-10">Get in touch with us to know more about mutual fund investments.</p>
 
       <form className="space-y-4 relative z-10" onSubmit={(e) => e.preventDefault()}>
         <input

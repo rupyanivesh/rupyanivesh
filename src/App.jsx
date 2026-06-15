@@ -33,20 +33,24 @@ const ForgotPasswordPage = lazy(() => import('./features/mfd-dashboard/pages/For
 
 const PAGE_META = {
   '/': {
-    title: 'RupyaNivesh | Trusted Mutual Fund Distributor',
-    description: 'SEBI-registered mutual fund distributor offering expert guidance, SIP calculators, and curated fund research to grow your wealth systematically.',
+    title: 'RupyaNivesh | AMFI Registered Mutual Fund Distributor in India',
+    description: 'Your AMFI-registered mutual fund distributor — facilitating SIP, ELSS, lumpsum, and mutual fund investments across leading AMCs in India. Nivesh made simple.',
   },
   '/contact': {
-    title: 'Contact Us | RupyaNivesh',
-    description: 'Get in touch with RupyaNivesh to start your mutual fund investment journey. Book a free consultation with our expert advisors.',
+    title: 'Contact Us | RupyaNivesh — Mutual Fund Distributor India',
+    description: 'Connect with RupyaNivesh, AMFI-registered mutual fund distributor. Start your SIP or mutual fund investment journey today. Serving investors across India.',
   },
   '/learn-finance': {
-    title: 'Learn Finance | RupyaNivesh',
-    description: 'Explore curated finance articles and guides to understand mutual funds, SIP, ELSS, and smart investing strategies.',
+    title: 'Learn Mutual Funds, SIP & ELSS | Free Finance Guides | RupyaNivesh',
+    description: 'Learn how mutual funds, SIP, ELSS, lumpsum, and SWP investments work. Free finance guides and education for every Indian investor.',
   },
   '/explore-funds': {
-    title: 'Explore Mutual Funds | RupyaNivesh',
-    description: 'Browse and compare top-performing mutual funds across categories. Find the right fund for your investment goals.',
+    title: 'Explore & Compare Mutual Funds in India | RupyaNivesh Screener',
+    description: 'Browse and compare mutual funds across equity, debt, ELSS, and hybrid categories. Search by returns, AMC, risk, and category — free mutual fund screener for Indian investors.',
+  },
+  '/tools': {
+    title: 'Free SIP Calculator, ELSS & Mutual Fund Calculators India | RupyaNivesh',
+    description: 'Free SIP calculator, lumpsum calculator, ELSS tax saving calculator, SWP, step-up SIP, retirement and goal-based calculators for Indian mutual fund investors.',
   },
   '/privacy-policy': {
     title: 'Privacy Policy | RupyaNivesh',
@@ -67,8 +71,8 @@ const PAGE_META = {
 };
 
 const DEFAULT_META = {
-  title: 'RupyaNivesh | Mutual Fund Distributor',
-  description: 'RupyaNivesh — SEBI-registered mutual fund distributor. Invest in top mutual funds with expert guidance.',
+  title: 'RupyaNivesh | AMFI Registered Mutual Fund Distributor in India',
+  description: 'RupyaNivesh — AMFI-registered mutual fund distributor facilitating SIP, ELSS, and mutual fund investments across leading AMCs in India. Nivesh made simple.',
 };
 
 const OG_IMAGE = 'https://rupyanivesh.in/rupyanivesh-logo.png';

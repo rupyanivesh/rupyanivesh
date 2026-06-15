@@ -59,6 +59,7 @@ const UPPERCASE_WORDS = new Set([
   'SBI','HDFC','ICICI','AXIS','DSP','UTI','LIC','IDBI','BOI','HSBC','JM',
   'PPFAS','ITI','NJ','PGIM','MOSL','ELSS','NFO','ETF','FOF','SIP','NAV',
   'AMC','SEBI','MF','US','UK','ESG','IT','PSU','FMCG','CEF','G-SEC',
+  'CRISIL','IBX','SDL','AAA','NBFC','HFC','BSE','NSE',
 ]);
 
 const toTitleCase = (str) =>
@@ -69,7 +70,9 @@ const toTitleCase = (str) =>
   });
 
 const cleanName = (name) =>
-  toTitleCase(String(name || '').trim())
+  toTitleCase(String(name || '').trim()
+    .replace(/\b(PSU|SDL|AAA|IBX|Gilt|Index|NBFC|HFC|CRISIL)-(?=(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))/gi, '$1 ')
+)
     .replace(/[\s\-–]+growth\s+plan[\s\-–]+growth\s+option/gi, ' (Growth)')
     .replace(/[\s\-–]+growth\s+plan[\s\-–]+growth/gi, ' (Growth)')
     .replace(/[\s\-–]+growth\s+plan/gi, ' (Growth)')
@@ -333,9 +336,9 @@ const FundsTable = () => {
             <p className="lg:hidden text-[10px] text-gray-400 text-center py-2 tracking-widest font-bold uppercase">Scroll to view</p>
             <div className="overflow-x-auto pb-4">
               <table className="w-full text-left min-w-[560px]">
-                <thead className="bg-[#FAF9F6] border-b border-gray-100 text-gray-400 uppercase text-[10px] font-black tracking-[0.2em]">
+                <thead className="bg-navy-900 border-b border-gray-100 text-white/50 uppercase text-[12px] font-black tracking-[0.2em]">
                   <tr>
-                    <th className="sticky left-0 z-30 bg-[#FAF9F6] px-3 lg:px-10 py-6 w-[210px] min-w-[210px] lg:w-auto lg:min-w-0">Scheme Name</th>
+                    <th className="sticky left-0 z-30 bg-navy-900 px-3 lg:px-10 py-6 w-[210px] min-w-[210px] lg:w-auto lg:min-w-0">Scheme Name</th>
                     <th className="px-3 lg:px-6 py-6 text-center">
                       <span className="block">1YR Returns</span>
                       {latestNavDate && <span className="block text-[8px] font-semibold normal-case tracking-normal text-gold/70 mt-0.5">as on {latestNavDate}</span>}
@@ -348,7 +351,7 @@ const FundsTable = () => {
                       <span className="block">5Y CAGR</span>
                       {latestNavDate && <span className="block text-[8px] font-semibold normal-case tracking-normal text-gold/70 mt-0.5">as on {latestNavDate}</span>}
                     </th>
-                    <th className="px-3 lg:px-10 py-6 text-center">Risk<br/><span className="text-[8px] font-semibold normal-case tracking-normal text-gray-400/70">SEBI Riskometer</span></th>
+                    <th className="px-3 lg:px-10 py-6 text-center">Risk</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -435,7 +438,6 @@ const FundsTable = () => {
                   className="lg:hidden overflow-hidden"
                 >
                   <div className="px-5 pb-4 space-y-2 text-gray-500 text-[10px] leading-relaxed">
-                    <p className="font-bold text-navy-900/70">RupyaNivesh · AMFI-Registered Mutual Fund Distributor · ARN-361484</p>
                     <p>Mutual fund investments are subject to market risks, read all scheme related documents carefully.</p>
                     <p>Past performance may or may not be sustained in the future.</p>
                     <p>This screener is for informational purposes only and does not constitute investment advice or a recommendation to buy/sell any scheme.</p>
@@ -447,26 +449,19 @@ const FundsTable = () => {
             </AnimatePresence>
 
             <div className="hidden lg:flex px-10 py-8 flex-col md:flex-row items-start justify-between gap-10">
-              <div className="flex items-start gap-4 text-gray-500 text-[10px] font-medium leading-relaxed max-w-3xl">
+              <div className="flex items-start gap-4 text-gray-700 text-[10.5px] font-medium leading-relaxed max-w-3xl">
                 <div className="w-10 h-10 rounded-2xl bg-white border border-gray-200 flex items-center justify-center shrink-0 mt-0.5">
                   <Info size={16} className="text-gold" />
                 </div>
                 <div className="space-y-1.5 flex-1">
                   <p className="text-[11px] text-navy-900 font-black uppercase tracking-widest mb-2">Statutory Disclosures</p>
-                  <p className="font-semibold text-navy-900/70">RupyaNivesh · AMFI-Registered Mutual Fund Distributor · ARN-361484</p>
                   <p>Mutual fund investments are subject to market risks, read all scheme related documents carefully.</p>
                   <p>Past performance may or may not be sustained in the future.</p>
                   <p>This screener is for informational purposes only and does not constitute investment advice or a recommendation to buy/sell any scheme.</p>
-                  <p>We facilitate investments in Regular plans only. Returns shown are CAGR for periods &gt;1 year and absolute for ≤1 year, {latestNavDate ? ` Data as on ${latestNavDate}.` : ''} Risk levels reflect the official SEBI Riskometer as provided by the AMC.</p>
+                  <p>We facilitate investments in Regular plans only. Returns shown are CAGR for periods &gt;1 year and absolute for ≤1 year, {latestNavDate ? ` Data as on ${latestNavDate}.` : ''}</p>
                   <p className="italic">Sorting or filtering results does not imply any fund is recommended or 'best'. Investors are advised to consult their financial advisor before making any investment decisions.</p>
                 </div>
               </div>
-              <Link to="/explore-funds" className="flex items-center gap-3 text-navy-900 font-bold text-[10px] uppercase tracking-[0.2em] group shrink-0 mt-2">
-                View All Schematics
-                <div className="w-10 h-10 rounded-full border border-navy-900/10 flex items-center justify-center group-hover:bg-navy-900 group-hover:text-white transition-all">
-                  <ArrowUpRight size={16} />
-                </div>
-              </Link>
             </div>
           </div>
         </div>

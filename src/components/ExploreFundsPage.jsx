@@ -5,6 +5,7 @@ const UPPERCASE_WORDS = new Set([
   'SBI','HDFC','ICICI','AXIS','DSP','UTI','LIC','IDBI','BOI','HSBC','JM',
   'PPFAS','ITI','NJ','PGIM','MOSL','ELSS','NFO','ETF','FOF','SIP','NAV',
   'AMC','SEBI','MF','US','UK','ESG','IT','PSU','FMCG','CEF','G-SEC','MNC',
+  'CRISIL','IBX','SDL','AAA','NBFC','HFC','BSE','NSE',
 ]);
 
 const toTitleCase = (str) =>
@@ -15,7 +16,9 @@ const toTitleCase = (str) =>
   });
 
 const cleanName = (name) =>
-  toTitleCase(String(name || '').trim())
+  toTitleCase(String(name || '').trim()
+    .replace(/\b(PSU|SDL|AAA|IBX|Gilt|Index|NBFC|HFC|CRISIL)-(?=(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))/gi, '$1 ')
+)
     .replace(/[\s\-–]+growth\s+plan[\s\-–]+growth\s+option/gi, ' (Growth)')
     .replace(/[\s\-–]+growth\s+plan[\s\-–]+growth/gi, ' (Growth)')
     .replace(/[\s\-–]+growth\s+plan/gi, ' (Growth)')
@@ -56,7 +59,7 @@ import { Line } from 'react-chartjs-2';
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
 
 const INR = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2, minimumFractionDigits: 2 });
-const PERIODS = ['1M', '6M', '1Y', '3Y', '5Y', 'MAX'];
+const PERIODS = ['1M', '6M', '1Y', '3Y', '5Y'];
 const PAGE_SIZE = 40;
 const CAGR_RANGE = { min: -11, max: 66 };
 
@@ -314,7 +317,7 @@ ChartJS.register(rangeHighlightPlugin, crosshairPlugin);
 
 const WIDE_WRAP = 'max-w-[1720px] mx-auto px-4 md:px-6 lg:px-8';
 
-const SummaryPopup = ({ fund, detail, onClose }) => {
+const SummaryPopup = ({ fund, detail, onClose, onNavigate }) => {
   const popupCardRef = useRef(null);
   const rows = (detail?.nav_history || [])
     .map((x) => ({ ...x, dt: parseDate(x.date), nav: Number(x.nav) }))
@@ -441,13 +444,11 @@ const SummaryPopup = ({ fund, detail, onClose }) => {
             <div className="rounded-xl bg-[#FAF9F6] p-3"><p className="text-xs text-navy-900/50">Current NAV</p><p className="font-bold text-navy-900">₹{INR.format(Number(detail?.metrics?.latest_nav || 0))}</p></div>
             <div className="rounded-xl bg-[#FAF9F6] p-3"><p className="text-xs text-navy-900/50">52 Week Low</p><p className="font-bold text-navy-900">{min1Y === null ? 'NA' : `₹${INR.format(min1Y)}`}</p></div>
             <div className="rounded-xl bg-[#FAF9F6] p-3"><p className="text-xs text-navy-900/50">52 Week High</p><p className="font-bold text-navy-900">{max1Y === null ? 'NA' : `₹${INR.format(max1Y)}`}</p></div>
-            <div className="rounded-xl bg-[#FAF9F6] p-3"><p className="text-xs text-navy-900/50">1M Return</p><p className={`font-bold ${pctClass(detail?.metrics?.returns_pct?.['1m'])}`}>{formatPct(detail?.metrics?.returns_pct?.['1m'])}</p></div>
             <div className="rounded-xl bg-[#FAF9F6] p-3"><p className="text-xs text-navy-900/50">1Y Return</p><p className={`font-bold ${pctClass(detail?.metrics?.returns_pct?.['1y'])}`}>{formatPct(detail?.metrics?.returns_pct?.['1y'])}</p></div>
-            <div className="rounded-xl bg-[#FAF9F6] p-3"><p className="text-xs text-navy-900/50">CAGR (Since Inception)</p><p className={`font-bold ${pctClass(inceptionCagr)}`}>{formatPct(inceptionCagr)}</p></div>
           </div>
         </div>
         <div className="p-3 border-t border-gray-100 pb-[max(env(safe-area-inset-bottom),0.9rem)]">
-          <Link to={`/explore-funds/${fund?.scheme_code}`} className="w-full inline-flex justify-center rounded-xl bg-navy-900 text-white font-bold py-3 hover:bg-navy-800 transition-colors">
+          <Link to={`/explore-funds/${fund?.scheme_code}`} onClick={onNavigate} className="w-full inline-flex justify-center rounded-xl bg-navy-900 text-white font-bold py-3 hover:bg-navy-800 transition-colors">
             View Details
           </Link>
         </div>
@@ -462,20 +463,22 @@ const SummaryPopup = ({ fund, detail, onClose }) => {
 const ScreenerView = () => {
   const navigate = useNavigate();
   const [indexData, setIndexData] = useState(null);
+  const listScrollRef = useRef(null);
+  const _savedState = useRef((() => { try { const s = sessionStorage.getItem('mf_screener'); if (s) { sessionStorage.removeItem('mf_screener'); return JSON.parse(s); } return null; } catch { return null; } })()).current;
 
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(_savedState?.search || '');
   const [popupFund, setPopupFund] = useState(null);
   const [popupDetail, setPopupDetail] = useState(null);
-  const [selectedAmcs, setSelectedAmcs] = useState([]);
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  const [categorySearch, setCategorySearch] = useState('');
+  const [selectedAmcs, setSelectedAmcs] = useState(_savedState?.selectedAmcs || []);
+  const [selectedCategories, setSelectedCategories] = useState(_savedState?.selectedCategories || []);
+  const [categorySearch, setCategorySearch] = useState(_savedState?.categorySearch || '');
   const [expandedCategoryGroups, setExpandedCategoryGroups] = useState({
     Debt: true,
     Equity: true,
     Hybrid: true,
     Other: true,
   });
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [visibleCount, setVisibleCount] = useState(_savedState?.visibleCount || PAGE_SIZE);
   const [isListExpanded, setIsListExpanded] = useState(false);
   const [cagrMin, setCagrMin] = useState(CAGR_RANGE.min);
   const [cagrMax, setCagrMax] = useState(CAGR_RANGE.max);
@@ -483,6 +486,24 @@ const ScreenerView = () => {
   const [sortOrder, setSortOrder] = useState('asc');
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [isMobileView, setIsMobileView] = useState(false);
+
+  useEffect(() => {
+    if (_savedState?.scrollTop && indexData) {
+      const t = _savedState.scrollTop;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (listScrollRef.current) listScrollRef.current.scrollTop = t;
+        });
+      });
+    }
+  }, [indexData]);
+
+  const saveState = () => {
+    sessionStorage.setItem('mf_screener', JSON.stringify({
+      search, selectedAmcs, selectedCategories, categorySearch, visibleCount,
+      scrollTop: listScrollRef.current?.scrollTop || 0,
+    }));
+  };
 
   useEffect(() => {
     const update = () => setIsMobileView(window.innerWidth < 768);
@@ -599,6 +620,7 @@ const ScreenerView = () => {
 
   const openPopup = async (fund) => {
     if (isMobileView) {
+      saveState();
       navigate(`/explore-funds/${fund.scheme_code}`);
       return;
     }
@@ -703,18 +725,20 @@ const ScreenerView = () => {
             </div>
 
             <div className="relative mt-4 rounded-2xl border border-[#eee8db] bg-[#fffefb] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-navy-900/50">Category</p>
-              <div className="mt-2 relative">
-                <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-navy-900/40" />
-                <input
-                  type="text"
-                  value={categorySearch}
-                  onChange={(e) => setCategorySearch(e.target.value)}
-                  placeholder="Search by category name"
-                  className="w-full rounded-lg border border-gray-200 bg-white pl-8 pr-2 py-1.5 text-sm outline-none focus:border-gold"
-                />
+              <div className="sticky top-0 z-10 bg-[#fffefb] pb-2">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-navy-900/50">Category</p>
+                <div className="mt-2 relative">
+                  <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-navy-900/40" />
+                  <input
+                    type="text"
+                    value={categorySearch}
+                    onChange={(e) => setCategorySearch(e.target.value)}
+                    placeholder="Search by category name"
+                    className="w-full rounded-lg border border-gray-200 bg-white pl-8 pr-2 py-1.5 text-sm outline-none focus:border-gold"
+                  />
+                </div>
               </div>
-              <div className="mt-3 max-h-[28rem] overflow-y-auto overflow-x-visible space-y-2 pr-1 overscroll-contain [scrollbar-width:thin] [scrollbar-color:#e2d9c9_transparent]">
+              <div className="mt-1 max-h-[28rem] overflow-y-auto overflow-x-visible space-y-2 pr-1 overscroll-contain [scrollbar-width:thin] [scrollbar-color:#e2d9c9_transparent]">
                 {filteredCategoryTree.map((group) => (
                   <div key={group.name} className="border-l border-[#ece4d4] pl-2">
                     <button
@@ -767,15 +791,15 @@ const ScreenerView = () => {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: 'easeOut', delay: 0.1 }}
-            className={`${mobileFiltersOpen ? 'hidden lg:block' : 'block'} bg-gradient-to-b from-[#fffdf9] to-white border border-[#e7dfd1] rounded-[30px] overflow-hidden shadow-[0_18px_48px_rgba(15,23,42,0.08)]`}>
-            <div className="p-5 border-b border-[#efe9dc]">
+            className={`${mobileFiltersOpen ? 'hidden lg:block' : 'block'} bg-gradient-to-b from-[#fffdf9] to-white border border-[#e7dfd1] rounded-[30px] overflow-hidden shadow-[0_18px_48px_rgba(15,23,42,0.08)] flex flex-col h-[calc(100vh-8rem)] sticky top-24`}>
+            <div className="px-4 py-3 md:p-5 border-b border-[#efe9dc]">
               <motion.h1
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.2 }}
-                className="text-[1.8rem] md:text-[2.35rem] leading-[1.08] font-serif font-bold text-navy-900 tracking-tight">Mutual Funds Screener</motion.h1>
-              <p className="mt-1 text-[11px] text-navy-900/50 font-semibold">RupyaNivesh · AMFI-Registered Mutual Fund Distributor · ARN-361484 &nbsp;|&nbsp; For informational purposes only — not investment advice</p>
-              <div className="mt-4 flex flex-wrap gap-3">
+                className="text-[1.2rem] md:text-[2.35rem] leading-[1.08] font-serif font-bold text-navy-900 tracking-tight">Mutual Funds Screener</motion.h1>
+              <p className="mt-0.5 text-[10px] md:text-[11px] text-navy-900/50 font-semibold">For informational purposes only — not investment advice</p>
+              <div className="mt-2 md:mt-4 flex flex-wrap gap-2 md:gap-3">
                 <div className="relative w-full md:w-[420px]">
                   <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-navy-900/40" />
                   <input
@@ -791,6 +815,7 @@ const ScreenerView = () => {
               </div>
             </div>
 
+            <div ref={listScrollRef} className="flex-1 overflow-y-auto overscroll-contain">
             <div className="lg:hidden p-3 space-y-2">
               {visibleFunds.map((fund, idx) => (
                 <div key={fund.scheme_code} className="rounded-xl border border-[#ece4d4] bg-white p-3">
@@ -938,23 +963,25 @@ const ScreenerView = () => {
               </div>
             )}
 
-            <div className="px-5 py-4 border-t border-[#efe9dc] bg-[#fffdf9] space-y-1.5 text-[10px] text-navy-900/50 leading-relaxed">
-              <p><span className="font-bold text-navy-900/70">Statutory Disclosures</span> · RupyaNivesh · AMFI-Registered Mutual Fund Distributor · ARN-361484</p>
+            <div className="px-5 py-4 border-t border-[#efe9dc] bg-[#fffdf9] space-y-1.5 text-[10.5px] text-navy-900/70 leading-relaxed">
+              <p><span className="font-bold text-navy-900/70">Statutory Disclosures</span></p>
               <p>Mutual fund investments are subject to market risks, read all scheme related documents carefully.</p>
               <p>Past performance may or may not be sustained in the future.</p>
               <p>This screener is for informational purposes only and does not constitute investment advice or a recommendation to buy/sell any scheme.</p>
-              <p>Returns shown: 1Y = absolute return; 3Y &amp; 5Y = CAGR. For IDCW plans, NAV-based returns reflect reinvestment of distributions at NAV.{latestNavDate ? ` Data as on ${latestNavDate}.` : ''} Risk levels reflect the SEBI Riskometer classification as assigned by the AMC.</p>
+              <p>Returns shown: 1Y = absolute return; 3Y &amp; 5Y = CAGR. For IDCW plans, NAV-based returns reflect reinvestment of distributions at NAV.{latestNavDate ? ` Data as on ${latestNavDate}.` : ''}</p>
               <p className="italic">Sorting or filtering results does not imply any fund is recommended or 'best'. Investors are advised to consult their financial advisor before making any investment decisions.</p>
+            </div>
             </div>
           </motion.div>
         </div>
       </div>
-      {!isMobileView && popupFund && <SummaryPopup fund={popupFund} detail={popupDetail} onClose={() => { setPopupFund(null); setPopupDetail(null); }} />}
+      {!isMobileView && popupFund && <SummaryPopup fund={popupFund} detail={popupDetail} onClose={() => { setPopupFund(null); setPopupDetail(null); }} onNavigate={saveState} />}
     </section>
   );
 };
 
 const DetailView = ({ schemeCode }) => {
+  const navigate = useNavigate();
   const [fund, setFund] = useState(null);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState('1Y');
@@ -1298,9 +1325,9 @@ const DetailView = ({ schemeCode }) => {
       <div className={WIDE_WRAP}>
         {/* Mobile back arrow */}
         <div className="md:hidden mb-3">
-          <Link to="/explore-funds" className="inline-flex items-center gap-1.5 text-sm font-semibold text-navy-900/70 hover:text-gold transition-colors">
+          <button onClick={() => navigate(-1)} className="inline-flex items-center gap-1.5 text-sm font-semibold text-navy-900/70 hover:text-gold transition-colors">
             <ArrowLeft size={16} /> Back
-          </Link>
+          </button>
         </div>
         <div className="bg-white border border-gray-100 rounded-2xl md:rounded-3xl p-2.5 sm:p-3 md:p-6">
           <div className="grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-5">
@@ -1328,10 +1355,6 @@ const DetailView = ({ schemeCode }) => {
                         <p className="text-[9px] uppercase tracking-[0.12em] text-navy-900/45 font-bold">1Y</p>
                         <p className={`mt-1 text-[1rem] leading-none font-bold truncate sm:text-[1.1rem] ${pctClass(fund.metrics?.returns_pct?.['1y'])}`}>{formatPct(fund.metrics?.returns_pct?.['1y'])}</p>
                       </div>
-                      <div className="min-w-0 rounded-lg bg-white/80 border border-[#efe9dc] p-2.5 col-span-2">
-                        <p className="text-[9px] uppercase tracking-[0.12em] text-navy-900/45 font-bold">Since Inc.</p>
-                        <p className={`mt-1 text-[1rem] leading-none font-bold truncate sm:text-[1.1rem] ${pctClass(inceptionCagr)}`}>{formatPct(inceptionCagr)}</p>
-                      </div>
                     </div>
                     <p className="mt-2.5 text-[11px] text-navy-900/55">Data updated: {fund.metrics?.latest_date || 'NA'}</p>
                   </div>
@@ -1355,10 +1378,6 @@ const DetailView = ({ schemeCode }) => {
                     <p className="text-[11px] uppercase tracking-widest text-navy-900/45 font-bold">1Y Return</p>
                     <p className={`mt-1 text-xl md:text-2xl font-bold ${pctClass(fund.metrics?.returns_pct?.['1y'])}`}>{formatPct(fund.metrics?.returns_pct?.['1y'])}</p>
                   </div>
-                  <div className="rounded-xl border border-gray-100 p-3">
-                    <p className="text-[11px] uppercase tracking-widest text-navy-900/45 font-bold">CAGR (Since Inception)</p>
-                    <p className={`mt-1 text-xl md:text-2xl font-bold ${pctClass(inceptionCagr)}`}>{formatPct(inceptionCagr)}</p>
-                  </div>
                 </div>
 
                 <div className="mt-5 rounded-xl border border-[#e8dcc5] bg-gradient-to-b from-[#fffdf8] to-[#fdf8ee] p-3.5 space-y-2">
@@ -1366,7 +1385,6 @@ const DetailView = ({ schemeCode }) => {
                   <p className="text-[11px] leading-relaxed text-navy-900/60">Mutual fund investments are subject to market risks, read all scheme related documents carefully.</p>
                   <p className="text-[11px] leading-relaxed text-navy-900/60">Past performance may or may not be sustained in the future.</p>
                   <p className="text-[11px] leading-relaxed text-navy-900/60">This information is for informational purposes only and does not constitute investment advice or a recommendation to buy/sell this scheme.</p>
-                  <p className="text-[11px] leading-relaxed text-navy-900/55">RupyaNivesh · AMFI-Registered Mutual Fund Distributor · ARN-361484. Investments in Regular plans may carry distributor commission.</p>
                 </div>
 
               </div>
