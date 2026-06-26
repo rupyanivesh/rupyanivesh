@@ -75,7 +75,7 @@ const DEFAULT_META = {
   description: 'RupyaNivesh — AMFI-registered mutual fund distributor facilitating SIP, ELSS, and mutual fund investments across leading AMCs in India. Nivesh made simple.',
 };
 
-const OG_IMAGE = 'https://rupyanivesh.in/rupyanivesh-logo.png?v=2';
+const OG_IMAGE = 'https://rupyanivesh.in/rupyanivesh-logo.png?v=3';
 const BASE_URL = 'https://rupyanivesh.in';
 
 const PageHelmet = () => {
