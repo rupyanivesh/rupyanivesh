@@ -1,5 +1,5 @@
-import React, { Suspense, lazy, useEffect } from 'react'
-import { BrowserRouter as Router, Navigate, Routes, Route, useLocation, useNavigationType } from 'react-router-dom'
+import React, { useEffect } from 'react'
+import { BrowserRouter as Router, Routes, Route, useLocation, useNavigationType } from 'react-router-dom'
 import { HelmetProvider, Helmet } from 'react-helmet-async'
 import Header from './components/Header'
 import Hero from './components/Hero'
@@ -23,13 +23,6 @@ import {
 } from './components/PolicyPages'
 import ScrollToTopButton from './components/ScrollToTopButton'
 import WhatsAppButton from './components/WhatsAppButton'
-import ProtectedRoute from './features/mfd-dashboard/components/ProtectedRoute'
-
-const MFDDashboard = lazy(() => import('./components/MFDDashboard'))
-const LoginPage = lazy(() => import('./features/mfd-dashboard/pages/LoginPage'))
-const SignupPage = lazy(() => import('./features/mfd-dashboard/pages/SignupPage'))
-const OtpPage = lazy(() => import('./features/mfd-dashboard/pages/OtpPage'))
-const ForgotPasswordPage = lazy(() => import('./features/mfd-dashboard/pages/ForgotPasswordPage'))
 
 const PAGE_META = {
   '/': {
@@ -80,16 +73,6 @@ const BASE_URL = 'https://rupyanivesh.in';
 
 const PageHelmet = () => {
   const { pathname } = useLocation();
-
-  if (pathname.startsWith('/mfd')) {
-    return (
-      <Helmet>
-        <title>MFD Portal | RupyaNivesh</title>
-        <meta name="robots" content="noindex, nofollow" />
-      </Helmet>
-    );
-  }
-
   const meta = PAGE_META[pathname] ?? DEFAULT_META;
   const canonical = `${BASE_URL}${pathname}`;
 
@@ -98,16 +81,12 @@ const PageHelmet = () => {
       <title>{meta.title}</title>
       <meta name="description" content={meta.description} />
       <link rel="canonical" href={canonical} />
-
-      {/* Open Graph */}
       <meta property="og:type" content="website" />
       <meta property="og:url" content={canonical} />
       <meta property="og:title" content={meta.title} />
       <meta property="og:description" content={meta.description} />
       <meta property="og:image" content={OG_IMAGE} />
       <meta property="og:site_name" content="RupyaNivesh" />
-
-      {/* Twitter / X */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={meta.title} />
       <meta name="twitter:description" content={meta.description} />
@@ -115,12 +94,6 @@ const PageHelmet = () => {
     </Helmet>
   );
 };
-
-const MfdRouteFallback = () => (
-  <div className="min-h-screen grid place-items-center bg-[#FAF9F6] text-navy-900/70 text-sm">
-    Loading MFD dashboard...
-  </div>
-)
 
 const Home = () => (
   <>
@@ -162,17 +135,14 @@ const ScrollToTop = () => {
     } else if (navType === 'POP') {
       const saved = scrollPositions[pathname] ?? 0;
       if (saved === 0) return;
-      // Home page has many sections — wait for full render before restoring
       const delay = pathname === '/' ? 120 : 0;
       setTimeout(() => window.scrollTo({ top: saved, behavior: 'instant' }), delay);
     } else if (navType === 'PUSH') {
-      // Save current scroll before navigating away, then go to top
       scrollPositions[pathname] = window.scrollY;
       window.scrollTo(0, 0);
     }
   }, [pathname, hash, navType]);
 
-  // Save scroll position on every scroll so it's always up to date
   useEffect(() => {
     const save = () => { scrollPositions[pathname] = window.scrollY; };
     window.addEventListener('scroll', save, { passive: true });
@@ -182,57 +152,28 @@ const ScrollToTop = () => {
   return null;
 };
 
-const AppLayout = () => {
-  const { pathname } = useLocation();
-  const isMfdRoute = pathname.startsWith('/mfd') || pathname.startsWith('/mfd-dashboard');
-
-  if (isMfdRoute) {
-    return (
-      <main>
-        <Suspense fallback={<MfdRouteFallback />}>
-          <Routes>
-            <Route path="/mfd/login" element={<LoginPage />} />
-            <Route path="/mfd/signup" element={<SignupPage />} />
-            <Route path="/mfd/otp" element={<OtpPage />} />
-            <Route path="/mfd/forgot-password" element={<ForgotPasswordPage />} />
-            <Route
-              path="/mfd-dashboard"
-              element={
-                <ProtectedRoute>
-                  <MFDDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/mfd/*" element={<Navigate to="/mfd/login" replace />} />
-          </Routes>
-        </Suspense>
-      </main>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-[#FAF9F6]">
-      <Header />
-      <main>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/contact" element={<ContactUs />} />
-          <Route path="/learn-finance" element={<LearnFinancePage />} />
-          <Route path="/explore-funds" element={<ExploreFundsPage />} />
-          <Route path="/explore-funds/:schemeCode" element={<ExploreFundsPage />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
-          <Route path="/terms-and-conditions" element={<TermsPage />} />
-          <Route path="/investor-charter" element={<InvestorCharterPage />} />
-          <Route path="/grievance-redressal" element={<GrievancePolicyPage />} />
-          <Route path="/:calcId" element={<CalculatorPage />} />
-        </Routes>
-      </main>
-      <Footer />
-      <ScrollToTopButton />
-      <WhatsAppButton />
-    </div>
-  );
-};
+const AppLayout = () => (
+  <div className="min-h-screen bg-[#FAF9F6]">
+    <Header />
+    <main>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/contact" element={<ContactUs />} />
+        <Route path="/learn-finance" element={<LearnFinancePage />} />
+        <Route path="/explore-funds" element={<ExploreFundsPage />} />
+        <Route path="/explore-funds/:schemeCode" element={<ExploreFundsPage />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+        <Route path="/terms-and-conditions" element={<TermsPage />} />
+        <Route path="/investor-charter" element={<InvestorCharterPage />} />
+        <Route path="/grievance-redressal" element={<GrievancePolicyPage />} />
+        <Route path="/:calcId" element={<CalculatorPage />} />
+      </Routes>
+    </main>
+    <Footer />
+    <ScrollToTopButton />
+    <WhatsAppButton />
+  </div>
+);
 
 function App() {
   return (

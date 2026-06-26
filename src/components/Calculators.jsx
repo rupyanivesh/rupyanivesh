@@ -2454,9 +2454,6 @@ const Calculators = () => {
                   <span className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-navy-900 bg-gradient-to-b from-[#FFF9EE] to-[#F6E6BF] px-3 py-1.5 rounded-full border border-gold/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_6px_12px_rgba(197,160,89,0.18)] whitespace-nowrap">
                     {categoryStyle(group.category).title}
                   </span>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-navy-900/50 whitespace-nowrap">
-                    {group.items.length} tools
-                  </span>
                 </div>
                 <p className="relative z-10 mt-2 text-[12px] font-semibold text-navy-900/60 leading-relaxed min-h-[36px]">
                   {categoryStyle(group.category).subtitle}

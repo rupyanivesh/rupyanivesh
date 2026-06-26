@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Menu, X, ChevronDown } from 'lucide-react';
+import { Menu, X, ChevronDown, TrendingUp, Target, ChevronRight } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { tools } from './Calculators';
 import logoSrc from '../assets/logo.png';
+
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -151,27 +152,36 @@ const Header = () => {
           <Link to="/learn-finance" onClick={() => setMobileMenuOpen(false)} className="text-lg font-serif font-bold text-navy-900">Learn Finance</Link>
           <Link to="/explore-funds" onClick={() => setMobileMenuOpen(false)} className="text-lg font-serif font-bold text-navy-900">Explore Funds</Link>
           <Link to="/#why-us" onClick={() => setMobileMenuOpen(false)} className="text-lg font-serif font-bold text-navy-900">Why Us</Link>
-          <div className="grid grid-cols-2 gap-2">
-            <Link to="/mfd/login" onClick={() => setMobileMenuOpen(false)} className="border border-navy-900/20 rounded-xl px-4 py-2 text-center text-sm font-semibold text-navy-900">
-              Sign In
-            </Link>
-            <Link to="/mfd/signup" onClick={() => setMobileMenuOpen(false)} className="bg-navy-900 rounded-xl px-4 py-2 text-center text-sm font-semibold text-white">
-              Sign Up
-            </Link>
-          </div>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2">
             <span className="text-lg font-serif font-bold text-navy-900">Tools</span>
-            {[
-              { label: 'SIP Calculator', to: '/sip-calculator' },
-              { label: 'Retirement Goal Calculator', to: '/retirement-calculator' },
-              { label: 'Lumpsum Calculator', to: '/lumpsum-calculator' },
-              { label: 'Education Calculator', to: '/education-calculator' },
-              { label: 'Inflation Calculator', to: '/inflation-calculator' },
-            ].map(item => (
-              <Link key={item.label} to={item.to} onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium text-gray-500 pl-3 hover:text-gold transition-colors">
-                {item.label}
-              </Link>
-            ))}
+            <div className="rounded-2xl border border-gray-100 overflow-hidden divide-y divide-gray-100">
+              {[
+                { category: 'Core Investment Calculators', icon: TrendingUp, subtitle: 'SIP, SWP, Lumpsum & more' },
+                { category: 'Goal Based Calculators', icon: Target, subtitle: 'Retirement, Education & more' },
+              ].map(({ category, icon: Icon, subtitle }) => (
+                <Link
+                  key={category}
+                  to="/#calculators"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setTimeout(() => {
+                      const el = document.getElementById('calculators');
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }, 50);
+                  }}
+                  className="flex items-center gap-3 px-4 py-3.5 bg-white active:bg-[#FAF9F6] transition-colors"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#C5A059] to-[#8B6914] shadow-sm flex items-center justify-center shrink-0">
+                    <Icon size={17} className="text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-navy-900 leading-tight">{category}</p>
+                    <p className="text-[11px] text-navy-900/40 mt-0.5">{subtitle}</p>
+                  </div>
+                  <ChevronRight size={14} className="text-gold/60 shrink-0" />
+                </Link>
+              ))}
+            </div>
           </div>
           <Link to="/contact" onClick={() => setMobileMenuOpen(false)} className="btn-primary w-full text-center">
             Contact Us
