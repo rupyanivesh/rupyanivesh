@@ -350,7 +350,7 @@ const Hero = () => {
             </h1>
 
             <p id="issue-hero-guidance-copy" className="text-sm sm:text-base md:text-lg text-gray-500 mb-5 md:mb-8 max-w-xl leading-relaxed font-medium">
-              Mutual fund investing becomes simpler through discipline, structure, and consistency. We facilitate access to SIPs and mutual fund investment options across different investing horizons and financial preferences.
+              Mutual fund investing becomes simpler through discipline, structure and consistency. We facilitate access to SIPs and mutual fund investment options across different investing horizons and financial preferences.
             </p>
 
             <div className="mb-6 md:mb-8 flex justify-start">
