@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Menu, X, ChevronDown, TrendingUp, Target, ChevronRight } from 'lucide-react';
+import { Menu, X, ChevronDown, TrendingUp, Target, ChevronRight, LogIn } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { tools } from './Calculators';
 import logoSrc from '../assets/logo.png';
@@ -44,23 +44,23 @@ const Header = () => {
       {/* Gold accent bar */}
       <div className="h-[2px] bg-gradient-to-r from-transparent via-gold to-transparent" />
 
-      <div className={`transition-all duration-500 ${solid ? 'py-4' : 'py-6'}`}>
+      <div className={`transition-all duration-500 ${solid ? 'py-2.5' : 'py-4'}`}>
       <div className="container-custom relative z-10">
-        <nav className="flex items-center justify-between">
+        <nav className="flex items-center">
           <Link
             to="/"
-            className="flex items-center gap-3 group cursor-pointer"
+            className="flex items-center gap-3 group cursor-pointer mr-8 xl:mr-14 shrink-0"
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           >
             <img
               src={logoSrc}
               alt="RupyaNivesh"
-              className="h-16 w-auto object-contain transition-opacity group-hover:opacity-85"
-              style={{ maxWidth: 260 }}
+              className="h-[72px] w-auto object-contain transition-opacity group-hover:opacity-85"
+              style={{ maxWidth: 280 }}
             />
           </Link>
 
-          <div className="hidden lg:flex items-center gap-8 xl:gap-10">
+          <div className="hidden lg:flex items-center gap-9 xl:gap-12">
             {[
               { to: '/', label: 'Home' },
               { to: '/learn-finance', label: 'Learn Finance' },
@@ -70,7 +70,7 @@ const Header = () => {
                 key={to}
                 to={to}
                 onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                className={`relative text-[13px] font-bold uppercase tracking-widest transition-colors whitespace-nowrap pb-1 group ${isActive(to) ? 'text-gold' : 'text-navy-900/60 hover:text-gold'}`}
+                className={`relative text-[14px] font-bold uppercase tracking-wider transition-colors whitespace-nowrap pb-1 group ${isActive(to) ? 'text-gold' : 'text-navy-900/65 hover:text-gold'}`}
               >
                 {label}
                 <span className={`absolute bottom-0 left-0 h-px bg-gold transition-all duration-300 ${isActive(to) ? 'w-full' : 'w-0 group-hover:w-full'}`} />
@@ -79,8 +79,8 @@ const Header = () => {
 
             {/* Tools Dropdown */}
             <div className="relative group/dropdown py-4 flex items-center">
-              <button className="relative flex items-center gap-1.5 text-[13px] font-bold uppercase tracking-widest text-navy-900/60 group-hover/dropdown:text-gold transition-colors whitespace-nowrap pb-1">
-                Tools <ChevronDown size={14} className="group-hover/dropdown:-rotate-180 transition-transform duration-300" />
+              <button className="relative flex items-center gap-1.5 text-[14px] font-bold uppercase tracking-wider text-navy-900/65 group-hover/dropdown:text-gold transition-colors whitespace-nowrap pb-1">
+                Tools <ChevronDown size={15} className="group-hover/dropdown:-rotate-180 transition-transform duration-300" />
                 <span className="absolute bottom-0 left-0 h-px bg-gold w-0 group-hover/dropdown:w-full transition-all duration-300" />
               </button>
 
@@ -124,16 +124,28 @@ const Header = () => {
                   window.scrollTo({ top: offset, behavior: 'smooth' });
                 }
               }}
-              className="relative text-[13px] font-bold uppercase tracking-widest text-navy-900/60 hover:text-gold transition-colors whitespace-nowrap pb-1 group">
+              className="relative text-[14px] font-bold uppercase tracking-wider text-navy-900/65 hover:text-gold transition-colors whitespace-nowrap pb-1 group">
               Why Us
               <span className="absolute bottom-0 left-0 h-px bg-gold w-0 group-hover:w-full transition-all duration-300" />
             </Link>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Link to="/contact" className="hidden md:block btn-primary py-2.5">
+          <div className="flex items-center gap-3 ml-auto pl-10 xl:pl-14">
+            <Link
+              to="/contact"
+              className="hidden md:inline-flex items-center bg-gold text-white px-7 py-3 rounded-full font-bold tracking-tight text-[13px] uppercase transition-all duration-500 hover:bg-gold-600 hover:shadow-[0_10px_20px_-10px_rgba(197,160,89,0.5)] active:scale-95 whitespace-nowrap"
+            >
               Contact Us
             </Link>
+            <a
+              href="https://rupyanivesh.my-portfolio.co.in/app/#/login"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden md:inline-flex items-center gap-2.5 pl-6 pr-6 py-3.5 rounded-full border border-navy-900/15 text-[14px] font-bold uppercase tracking-widest text-navy-900/70 hover:text-navy-900 hover:border-navy-900/30 hover:bg-navy-900/[0.03] transition-all duration-300 whitespace-nowrap"
+            >
+              <LogIn size={17} strokeWidth={2.25} className="text-gold" />
+              Login
+            </a>
             <button
               className="lg:hidden p-2 text-navy-900"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -183,6 +195,16 @@ const Header = () => {
               ))}
             </div>
           </div>
+          <a
+            href="https://rupyanivesh.my-portfolio.co.in/app/#/login"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setMobileMenuOpen(false)}
+            className="inline-flex items-center justify-center gap-2 w-full py-3.5 rounded-full border border-navy-900/15 text-sm font-bold uppercase tracking-widest text-navy-900/80"
+          >
+            <LogIn size={16} className="text-gold" />
+            Login
+          </a>
           <Link to="/contact" onClick={() => setMobileMenuOpen(false)} className="btn-primary w-full text-center">
             Contact Us
           </Link>
