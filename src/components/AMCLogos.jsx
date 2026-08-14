@@ -7,7 +7,7 @@ import { motion, useAnimationFrame, useMotionValue, useTransform, wrap } from 'f
 const amcs = [
   { name: 'Edelweiss Mutual Fund',      short: 'Edelweiss',      file: 'edelweiss_groww.webp', color: 'text-[#0F4C9C]', shape: 'square' },
   { name: 'SBI Mutual Fund',   short: 'SBI',            file: 'sbi_groww.webp',    color: 'text-[#0067B1]', shape: 'square' },
-  { name: 'Helios Mutual Fund',         short: 'Helios',         file: 'helios_groww.webp',    color: 'text-[#E9772B]', shape: 'plain', sizeClass: 'w-36 h-24', textGapClass: '-ml-8' },
+  { name: 'Helios Mutual Fund',         short: 'Helios',         file: 'helios_groww.webp',    color: 'text-[#D3222A]', shape: 'circle' },
   { name: 'Motilal Oswal Mutual Fund',  short: 'Motilal Oswal',  file: 'motilal_groww.webp',   color: 'text-[#2E1A8C]', shape: 'square' },
   { name: 'ICICI Prudential',  short: 'ICICI',          file: 'icici_groww.webp',  color: 'text-[#A32638]', shape: 'plain' },
   { name: 'WhiteOak Capital Mutual Fund', short: 'WhiteOak Capital', file: 'whiteoak_groww.webp', color: 'text-[#14315C]', shape: 'square' },
