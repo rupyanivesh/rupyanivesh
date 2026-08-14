@@ -49,13 +49,13 @@ const Header = () => {
         <nav className="flex items-center">
           <Link
             to="/"
-            className="flex items-center gap-3 group cursor-pointer mr-8 xl:mr-14 shrink-0"
+            className="flex items-center gap-3 group cursor-pointer mr-3 sm:mr-8 xl:mr-14 shrink min-w-0"
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           >
             <img
               src={logoSrc}
               alt="RupyaNivesh"
-              className="h-[72px] w-auto object-contain transition-opacity group-hover:opacity-85"
+              className="h-12 sm:h-[72px] w-auto max-w-full object-contain transition-opacity group-hover:opacity-85"
               style={{ maxWidth: 280 }}
             />
           </Link>
@@ -130,7 +130,7 @@ const Header = () => {
             </Link>
           </div>
 
-          <div className="flex items-center gap-3 ml-auto pl-10 xl:pl-14">
+          <div className="flex items-center gap-3 ml-auto pl-3 sm:pl-10 xl:pl-14 shrink-0">
             <Link
               to="/contact"
               className="hidden md:inline-flex items-center bg-gold text-white px-7 py-3 rounded-full font-bold tracking-tight text-[13px] uppercase transition-all duration-500 hover:bg-gold-600 hover:shadow-[0_10px_20px_-10px_rgba(197,160,89,0.5)] active:scale-95 whitespace-nowrap"
@@ -147,8 +147,9 @@ const Header = () => {
               Login
             </a>
             <button
-              className="lg:hidden p-2 text-navy-900"
+              className="lg:hidden -mr-1 p-2.5 rounded-full text-navy-900 active:bg-navy-900/[0.06] transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle menu"
             >
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
